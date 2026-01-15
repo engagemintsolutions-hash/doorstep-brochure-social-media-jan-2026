@@ -16,9 +16,8 @@ COPY .env.example .env.example
 COPY auth_data.json auth_data.json
 COPY user_usage_data.json user_usage_data.json
 
-# Copy start script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+# Create start script with proper line endings
+RUN printf '#!/bin/sh\necho "Starting on port ${PORT:-8000}"\nexec uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}\n' > /app/start.sh && chmod +x /app/start.sh
 
 # Create directories for persistent data
 RUN mkdir -p uploads brochure_sessions exports_tmp data/epc
