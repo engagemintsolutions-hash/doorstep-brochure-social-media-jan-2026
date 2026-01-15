@@ -16,6 +16,10 @@ COPY .env.example .env.example
 COPY auth_data.json auth_data.json
 COPY user_usage_data.json user_usage_data.json
 
+# Copy start script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Create directories for persistent data
 RUN mkdir -p uploads brochure_sessions exports_tmp data/epc
 
@@ -28,5 +32,5 @@ EXPOSE 8000
 # Default port (Railway overrides with $PORT)
 ENV PORT=8000
 
-# Start command - using shell form to expand $PORT
-CMD uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+# Start using entrypoint script
+ENTRYPOINT ["/app/start.sh"]
