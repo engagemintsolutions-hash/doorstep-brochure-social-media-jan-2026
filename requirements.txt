@@ -32,10 +32,10 @@ apscheduler==3.10.4
 # pytest-asyncio==0.23.3
 # respx==0.21.1
 
-# Database (optional - uncomment if using PostgreSQL)
-# sqlalchemy==2.0.25
-# asyncpg==0.29.0
-# alembic==1.13.1
+# Database
+sqlalchemy==2.0.25
+asyncpg==0.29.0
+aiosqlite==0.19.0
 
 # AI Background Removal (optional - large dependency)
 # rembg==2.0.50
