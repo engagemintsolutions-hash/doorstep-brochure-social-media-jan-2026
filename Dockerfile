@@ -29,5 +29,8 @@ EXPOSE 8000
 # Default port (Railway overrides with $PORT)
 ENV PORT=8000
 
+# Force unbuffered Python output
+ENV PYTHONUNBUFFERED=1
+
 # Start using the startup script
-CMD ["python", "start_server.py"]
+CMD ["python", "-u", "start_server.py"]

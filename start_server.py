@@ -1,7 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -u
 """Simple startup script for Railway deployment."""
+# Immediate print before any imports
+print("SCRIPT STARTING", flush=True)
 import os
 import sys
+sys.stdout.reconfigure(line_buffering=True)
 
 print("=" * 50, flush=True)
 print("START_SERVER.PY RUNNING", flush=True)
