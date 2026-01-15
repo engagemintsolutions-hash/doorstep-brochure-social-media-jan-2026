@@ -15,7 +15,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
-            background: linear-gradient(135deg, #009BA0 0%, #FF8A80 100%);
+            background: linear-gradient(135deg, #C20430 0%, #E57373 100%);
             position: relative;
             overflow-x: hidden;
         }
@@ -28,8 +28,8 @@
             right: 0;
             bottom: 0;
             background-image:
-                radial-gradient(circle at 10% 20%, rgba(0, 155, 160, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 90% 80%, rgba(255, 138, 128, 0.3) 0%, transparent 50%);
+                radial-gradient(circle at 10% 20%, rgba(194, 4, 48, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(229, 115, 115, 0.3) 0%, transparent 50%);
             pointer-events: none;
         }
 
@@ -65,7 +65,7 @@
         }
 
         header .welcome-text {
-            color: #009BA0;
+            color: #C20430;
             font-size: 1.25rem;
             font-weight: 500;
         }
@@ -100,7 +100,7 @@
             left: 0;
             right: 0;
             height: 6px;
-            background: linear-gradient(90deg, #009BA0, #FF8A80);
+            background: linear-gradient(90deg, #C20430, #E57373);
             transform: scaleX(0);
             transform-origin: left;
             transition: transform 0.3s ease;
@@ -140,7 +140,7 @@
         .action-card button {
             width: 100%;
             padding: 1rem;
-            background: linear-gradient(135deg, #009BA0 0%, #007f84 100%);
+            background: linear-gradient(135deg, #C20430 0%, #9E0328 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -151,7 +151,7 @@
         }
 
         .action-card button:hover {
-            background: linear-gradient(135deg, #007f84 0%, #006669 100%);
+            background: linear-gradient(135deg, #9E0328 0%, #7a0220 100%);
             transform: scale(1.02);
         }
 
@@ -171,16 +171,16 @@
             font-size: 0.85rem;
         }
 
-        .quick-post .card-icon { color: #FF8A80; }
-        .full-brochure .card-icon { color: #009BA0; }
-        .calendar .card-icon { color: #00b4a1; }
+        .quick-post .card-icon { color: #E57373; }
+        .full-brochure .card-icon { color: #C20430; }
+        .calendar .card-icon { color: #C20430; }
 
         .quick-post button {
-            background: linear-gradient(135deg, #FF8A80 0%, #ff6b6b 100%);
+            background: linear-gradient(135deg, #E57373 0%, #C20430 100%);
         }
 
         .quick-post button:hover {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            background: linear-gradient(135deg, #C20430 0%, #9E0328 100%);
         }
 
         @keyframes slideIn {
@@ -220,7 +220,7 @@
 <body>
     <div class="container">
         <header>
-            <img src="/static/doorstep-logo.png" alt="Doorstep Logo">
+            <span style="font-size: 2.5rem; font-weight: 700; color: #C20430;">Doorstep</span>
             <h1>Agent Dashboard</h1>
             <p class="welcome-text">Welcome, <span id="userName">Agent</span>!</p>
             <p class="subtitle">What would you like to create today?</p>

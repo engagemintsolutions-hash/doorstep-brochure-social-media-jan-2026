@@ -28,7 +28,17 @@
       "Bash(gh:*)",
       "Bash(git remote:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git config:*)",
+      "Bash(git rm:*)",
+      "Bash(railway up:*)",
+      "Bash(railway logs:*)",
+      "Bash(railway deployment:*)",
+      "Bash(start chrome:*)",
+      "Bash(railway redeploy:*)",
+      "Bash(railway:*)",
+      "WebFetch(domain:brochure-social-media-jan2026-production.up.railway.app)",
+      "WebFetch(domain:www.doorstepit.co.uk)"
     ]
   }
 }

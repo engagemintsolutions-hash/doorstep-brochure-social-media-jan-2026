@@ -16,7 +16,7 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
-            background: linear-gradient(135deg, #009BA0 0%, #FF8A80 100%);
+            background: linear-gradient(135deg, #C20430 0%, #E57373 100%);
             position: relative;
             overflow-x: hidden;
         }
@@ -29,8 +29,8 @@
             right: 0;
             bottom: 0;
             background-image:
-                radial-gradient(circle at 10% 20%, rgba(0, 155, 160, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 90% 80%, rgba(255, 138, 128, 0.3) 0%, transparent 50%);
+                radial-gradient(circle at 10% 20%, rgba(194, 4, 48, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(229, 115, 115, 0.3) 0%, transparent 50%);
             pointer-events: none;
         }
 
@@ -74,8 +74,8 @@
             margin-bottom: 1rem;
             padding: 0.5rem 1rem;
             background: rgba(255, 255, 255, 0.9);
-            border: 2px solid #009BA0;
-            color: #009BA0;
+            border: 2px solid #C20430;
+            color: #C20430;
             text-decoration: none;
             border-radius: 8px;
             font-weight: 600;
@@ -83,7 +83,7 @@
         }
 
         .back-button:hover {
-            background: #009BA0;
+            background: #C20430;
             color: white;
         }
 
@@ -113,7 +113,7 @@
             justify-content: center;
             width: 28px;
             height: 28px;
-            background: linear-gradient(135deg, #009BA0, #007f84);
+            background: linear-gradient(135deg, #C20430, #9E0328);
             color: white;
             border-radius: 50%;
             font-size: 0.85rem;
@@ -121,7 +121,7 @@
         }
 
         .photo-upload {
-            border: 3px dashed #009BA0;
+            border: 3px dashed #C20430;
             border-radius: 12px;
             padding: 2rem;
             text-align: center;
@@ -132,12 +132,12 @@
 
         .photo-upload:hover {
             background: #e8f5f5;
-            border-color: #007f84;
+            border-color: #9E0328;
         }
 
         .photo-upload.dragging {
             background: #d4f1f1;
-            border-color: #00b4a1;
+            border-color: #C20430;
         }
 
         .photo-upload input[type="file"] {
@@ -145,7 +145,7 @@
         }
 
         .photo-upload-text {
-            color: #009BA0;
+            color: #C20430;
             font-size: 1rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
@@ -224,7 +224,7 @@
         }
 
         .photo-preview-item .remove-photo:hover {
-            background: #ee5a5a;
+            background: #9E0328;
             transform: scale(1.1);
         }
 
@@ -261,7 +261,7 @@
         .form-group textarea:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #009BA0;
+            border-color: #C20430;
             box-shadow: 0 0 0 3px rgba(0, 155, 160, 0.1);
         }
 
@@ -279,7 +279,7 @@
         .generate-button {
             width: 100%;
             padding: 1.25rem;
-            background: linear-gradient(135deg, #FF8A80 0%, #ff6b6b 100%);
+            background: linear-gradient(135deg, #E57373 0%, #C20430 100%);
             color: white;
             border: none;
             border-radius: 12px;
@@ -295,9 +295,9 @@
         }
 
         .generate-button:hover:not(:disabled) {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            background: linear-gradient(135deg, #C20430 0%, #9E0328 100%);
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(255, 138, 128, 0.3);
+            box-shadow: 0 8px 24px rgba(229, 115, 115, 0.3);
         }
 
         .generate-button:disabled {
@@ -368,20 +368,20 @@
         }
 
         .variant-card:hover {
-            border-color: #009BA0;
+            border-color: #C20430;
             background: #fff;
             transform: translateX(4px);
         }
 
         .variant-card.selected {
-            border-color: #009BA0;
+            border-color: #C20430;
             background: #e8f5f5;
             box-shadow: 0 4px 16px rgba(0, 155, 160, 0.2);
         }
 
         .variant-card .variant-label {
             display: inline-block;
-            background: linear-gradient(135deg, #009BA0, #007f84);
+            background: linear-gradient(135deg, #C20430, #9E0328);
             color: white;
             padding: 0.25rem 0.75rem;
             border-radius: 6px;
@@ -436,20 +436,20 @@
         }
 
         .hashtag-chip:hover {
-            border-color: #009BA0;
+            border-color: #C20430;
             transform: translateY(-2px);
         }
 
         .hashtag-chip.selected {
-            background: #009BA0;
+            background: #C20430;
             color: white;
-            border-color: #009BA0;
+            border-color: #C20430;
         }
 
         .hashtag-chip.custom {
-            background: #FF8A80;
+            background: #E57373;
             color: white;
-            border-color: #FF8A80;
+            border-color: #E57373;
             position: relative;
             padding-right: 2.5rem;
         }
@@ -486,12 +486,12 @@
 
         .custom-hashtag-input input:focus {
             outline: none;
-            border-color: #009BA0;
+            border-color: #C20430;
         }
 
         .custom-hashtag-input button {
             padding: 0.75rem 1.5rem;
-            background: #009BA0;
+            background: #C20430;
             color: white;
             border: none;
             border-radius: 8px;
@@ -501,7 +501,7 @@
         }
 
         .custom-hashtag-input button:hover {
-            background: #007f84;
+            background: #9E0328;
         }
 
         .hashtag-preview {
@@ -518,7 +518,7 @@
         }
 
         #selectedHashtagsPreview {
-            color: #009BA0;
+            color: #C20430;
             font-weight: 500;
         }
 
@@ -528,7 +528,7 @@
             padding: 2rem;
             background: #e8f5f5;
             border-radius: 12px;
-            border: 2px solid #009BA0;
+            border: 2px solid #C20430;
         }
 
         .signature-header {
@@ -563,7 +563,7 @@
             background: white;
             padding: 1.5rem;
             border-radius: 8px;
-            border-left: 4px solid #009BA0;
+            border-left: 4px solid #C20430;
         }
 
         .signature-preview p {
@@ -572,7 +572,7 @@
         }
 
         .signature-preview p:first-child {
-            color: #009BA0;
+            color: #C20430;
             font-size: 1.05rem;
             margin-bottom: 1rem;
         }
@@ -589,7 +589,7 @@
             position: absolute;
             top: 1rem;
             right: 1rem;
-            background: #00b4a1;
+            background: #C20430;
             color: white;
             padding: 0.25rem 0.75rem;
             border-radius: 6px;
@@ -619,12 +619,12 @@
         }
 
         .btn-schedule {
-            background: linear-gradient(135deg, #009BA0, #007f84);
+            background: linear-gradient(135deg, #C20430, #9E0328);
             color: white;
         }
 
         .btn-schedule:hover:not(:disabled) {
-            background: linear-gradient(135deg, #007f84, #006669);
+            background: linear-gradient(135deg, #9E0328, #7a0220);
             transform: scale(1.02);
         }
 
@@ -639,9 +639,9 @@
         }
 
         .btn-copy.copied {
-            background: #00b4a1;
+            background: #C20430;
             color: white;
-            border-color: #00b4a1;
+            border-color: #C20430;
         }
 
         .action-buttons button:disabled {
@@ -652,7 +652,7 @@
         .success-message {
             display: none;
             background: #d4edda;
-            border: 2px solid #00b4a1;
+            border: 2px solid #C20430;
             color: #155724;
             padding: 1.5rem;
             border-radius: 12px;
@@ -687,12 +687,12 @@
         }
 
         .btn-view-calendar {
-            background: #009BA0;
+            background: #C20430;
             color: white;
         }
 
         .btn-view-calendar:hover {
-            background: #007f84;
+            background: #9E0328;
         }
 
         .btn-new-post {
@@ -728,7 +728,7 @@
         }
 
         .robot-loader h3 {
-            color: #009BA0;
+            color: #C20430;
             font-size: 1.5rem;
             margin-bottom: 0.5rem;
         }
@@ -752,12 +752,12 @@
         /* Edit Mode Styles */
         .variant-card.editing {
             background: #f8f9fa;
-            border-color: #009BA0;
+            border-color: #C20430;
         }
 
         .variant-text-editable {
             padding: 1rem;
-            border: 2px solid #009BA0;
+            border: 2px solid #C20430;
             border-radius: 8px;
             font-size: 1rem;
             font-family: inherit;
@@ -783,12 +783,12 @@
         }
 
         .btn-save-edit {
-            background: #00b4a1;
+            background: #C20430;
             color: white;
         }
 
         .btn-save-edit:hover {
-            background: #009BA0;
+            background: #C20430;
         }
 
         .btn-cancel-edit {
@@ -807,8 +807,8 @@
             right: 1rem;
             padding: 0.4rem 0.8rem;
             background: rgba(0, 155, 160, 0.1);
-            color: #009BA0;
-            border: 1px solid #009BA0;
+            color: #C20430;
+            border: 1px solid #C20430;
             border-radius: 6px;
             font-size: 0.85rem;
             font-weight: 600;
@@ -822,7 +822,7 @@
         }
 
         .btn-edit:hover {
-            background: #009BA0;
+            background: #C20430;
             color: white;
         }
 
@@ -901,7 +901,7 @@
 
         .schedule-form input[type="datetime-local"]:focus {
             outline: none;
-            border-color: #009BA0;
+            border-color: #C20430;
             box-shadow: 0 0 0 3px rgba(0, 155, 160, 0.1);
         }
 
@@ -929,7 +929,7 @@
         }
 
         .btn-schedule-now {
-            background: linear-gradient(135deg, #009BA0, #007f84);
+            background: linear-gradient(135deg, #C20430, #9E0328);
             color: white;
             position: relative;
             display: flex;
@@ -939,9 +939,9 @@
         }
 
         .btn-schedule-now:hover:not(:disabled) {
-            background: linear-gradient(135deg, #007f84, #006669);
+            background: linear-gradient(135deg, #9E0328, #7a0220);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 155, 160, 0.3);
+            box-shadow: 0 6px 20px rgba(194, 4, 48, 0.3);
         }
 
         .btn-schedule-now:disabled {
@@ -1010,7 +1010,7 @@
         <a href="/static/dashboard.html" class="back-button">← Back to Dashboard</a>
 
         <header>
-            <img src="/static/doorstep-logo.png" alt="Doorstep Logo">
+            <span style="font-size: 2.5rem; font-weight: 700; color: #C20430;">Doorstep</span>
             <h1>Quick Social Post</h1>
             <p class="subtitle">Create a social media post in under a minute</p>
         </header>
