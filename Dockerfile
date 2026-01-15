@@ -30,5 +30,5 @@ EXPOSE 8000
 # Default port (Railway overrides with $PORT)
 ENV PORT=8000
 
-# Start using Python module - this handles PORT env var properly
-CMD ["python", "-m", "backend.main"]
+# Start using Python and uvicorn directly
+CMD python -c "import os; port=int(os.environ.get('PORT', 8000)); print(f'Starting on port {port}'); import uvicorn; uvicorn.run('backend.main:app', host='0.0.0.0', port=port)"
