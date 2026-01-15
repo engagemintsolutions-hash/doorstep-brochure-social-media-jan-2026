@@ -15,8 +15,7 @@ COPY branding/ branding/
 COPY .env.example .env.example
 COPY auth_data.json auth_data.json
 COPY user_usage_data.json user_usage_data.json
-
-# No start script needed - use Python directly
+COPY start_server.py start_server.py
 
 # Create directories for persistent data
 RUN mkdir -p uploads brochure_sessions exports_tmp data/epc
@@ -30,5 +29,5 @@ EXPOSE 8000
 # Default port (Railway overrides with $PORT)
 ENV PORT=8000
 
-# Start using Python and uvicorn directly
-CMD python -c "import os; port=int(os.environ.get('PORT', 8000)); print(f'Starting on port {port}'); import uvicorn; uvicorn.run('backend.main:app', host='0.0.0.0', port=port)"
+# Start using the startup script
+CMD ["python", "start_server.py"]
