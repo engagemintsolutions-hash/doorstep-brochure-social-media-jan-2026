@@ -202,6 +202,12 @@ function deleteSelectedElement() {
         return false;
     }
 
+    // Check if element is locked
+    if (selected.dataset.locked === 'true') {
+        showToast('Element is locked. Unlock it first to delete.');
+        return false;
+    }
+
     const elementId = selected.id || selected.dataset.elementId;
     const pageId = EditorState.currentPage;
 
@@ -257,6 +263,51 @@ function ungroupSelectedElements() {
 }
 
 /**
+ * Toggle lock on selected element
+ */
+function toggleElementLock() {
+    const selected = EditorState.selectedElement ||
+                    (EditorState.selectedElements && EditorState.selectedElements[0]);
+
+    if (!selected) {
+        showToast('Select an element to lock/unlock');
+        return false;
+    }
+
+    const isLocked = selected.dataset.locked === 'true';
+
+    if (isLocked) {
+        // Unlock
+        selected.dataset.locked = 'false';
+        selected.classList.remove('element-locked');
+        selected.style.pointerEvents = '';
+        showToast('Element unlocked');
+    } else {
+        // Lock
+        selected.dataset.locked = 'true';
+        selected.classList.add('element-locked');
+        showToast('Element locked - click the lock icon to unlock');
+    }
+
+    // Save to history
+    saveToHistory(isLocked ? 'unlock' : 'lock');
+    markDirty();
+
+    return true;
+}
+
+/**
+ * Check if element is locked
+ */
+function isElementLocked(element) {
+    return element && element.dataset.locked === 'true';
+}
+
+// Make lock functions globally available
+window.toggleElementLock = toggleElementLock;
+window.isElementLocked = isElementLocked;
+
+/**
  * Show keyboard shortcuts help modal
  */
 function showKeyboardShortcuts() {
@@ -302,6 +353,7 @@ function showKeyboardShortcuts() {
                             <div class="shortcut-item"><kbd>Shift+Click</kbd> Multi-select</div>
                             <div class="shortcut-item"><kbd>Ctrl+G</kbd> Group</div>
                             <div class="shortcut-item"><kbd>Ctrl+Shift+G</kbd> Ungroup</div>
+                            <div class="shortcut-item"><kbd>Ctrl+L</kbd> Lock/Unlock</div>
                         </div>
                     </div>
                 </div>
@@ -4152,6 +4204,12 @@ function initializeEventListeners() {
         if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'G') {
             e.preventDefault();
             ungroupSelectedElements();
+        }
+
+        // Ctrl/Cmd + L = Lock/Unlock element
+        if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+            e.preventDefault();
+            toggleElementLock();
         }
 
         // Delete or Backspace = Delete selected
