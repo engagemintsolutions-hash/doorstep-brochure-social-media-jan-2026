@@ -22,7 +22,7 @@ const EditorState = {
     currentPage: null,
     selectedElement: null,
     isDirty: false,
-    zoomLevel: 1.0,
+    zoomLevel: 0.65,  // Default 65% for better overview
     showGuides: false,
     autoSaveInterval: null,
     pageDescriptions: {},  // Store page-specific AI descriptions by page ID
@@ -1399,6 +1399,14 @@ function renderPages() {
     if (pages.length > 0) {
         selectPage(pages[0].id);
     }
+
+    // Apply default zoom level after rendering
+    setTimeout(() => {
+        if (typeof setZoom === 'function') {
+            setZoom(EditorState.zoomLevel);
+            console.log(`🔍 Applied default zoom: ${Math.round(EditorState.zoomLevel * 100)}%`);
+        }
+    }, 100);
 }
 
 function attachPhotoHoverEffects() {

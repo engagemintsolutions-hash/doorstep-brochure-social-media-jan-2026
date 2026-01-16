@@ -49,6 +49,14 @@
                         <polyline points="12 6 12 12 16 14"/>
                     </svg>
                 </button>
+                <button id="keyboardShortcutsBtn" class="action-btn icon-only" title="Keyboard Shortcuts (?)" onclick="openKeyboardShortcuts()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="4" width="20" height="16" rx="2"/>
+                        <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01"/>
+                        <path d="M6 12h.01M10 12h.01M14 12h.01M18 12h.01"/>
+                        <path d="M8 16h8"/>
+                    </svg>
+                </button>
             </div>
 
             <button id="toggleChatbotBtn" class="action-btn" title="Transform Text">
@@ -181,20 +189,40 @@
         </select>
 
         <!-- Font Family -->
-        <select class="format-select" id="fontFamilySelect" title="Font Family">
-            <optgroup label="Display">
+        <select class="format-select" id="fontFamilySelect" title="Font Family" style="max-width: 140px;">
+            <optgroup label="Estate Agent Favorites">
                 <option value="'Playfair Display', serif">Playfair Display</option>
-            </optgroup>
-            <optgroup label="Serif">
-                <option value="Georgia, serif">Georgia</option>
-                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="'Montserrat', sans-serif">Montserrat</option>
                 <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+                <option value="'Raleway', sans-serif">Raleway</option>
+                <option value="'Lora', serif">Lora</option>
             </optgroup>
-            <optgroup label="Sans-Serif">
+            <optgroup label="Display & Serif">
+                <option value="'Libre Baskerville', serif">Libre Baskerville</option>
+                <option value="'Merriweather', serif">Merriweather</option>
+                <option value="'Source Serif Pro', serif">Source Serif Pro</option>
+                <option value="'EB Garamond', serif">EB Garamond</option>
+                <option value="'PT Serif', serif">PT Serif</option>
+            </optgroup>
+            <optgroup label="Modern Sans-Serif">
                 <option value="'Inter', sans-serif">Inter</option>
-                <option value="Arial, sans-serif">Arial</option>
-                <option value="Helvetica, sans-serif">Helvetica</option>
-                <option value="Verdana, sans-serif">Verdana</option>
+                <option value="'Poppins', sans-serif">Poppins</option>
+                <option value="'Open Sans', sans-serif">Open Sans</option>
+                <option value="'Roboto', sans-serif">Roboto</option>
+                <option value="'Lato', sans-serif">Lato</option>
+                <option value="'Nunito', sans-serif">Nunito</option>
+                <option value="'Work Sans', sans-serif">Work Sans</option>
+                <option value="'DM Sans', sans-serif">DM Sans</option>
+            </optgroup>
+            <optgroup label="Condensed">
+                <option value="'Oswald', sans-serif">Oswald</option>
+                <option value="'Roboto Condensed', sans-serif">Roboto Condensed</option>
+                <option value="'Barlow Condensed', sans-serif">Barlow Condensed</option>
+            </optgroup>
+            <optgroup label="Handwriting">
+                <option value="'Dancing Script', cursive">Dancing Script</option>
+                <option value="'Pacifico', cursive">Pacifico</option>
+                <option value="'Great Vibes', cursive">Great Vibes</option>
             </optgroup>
         </select>
         <!-- Advanced Font Picker Button -->
@@ -282,6 +310,16 @@
                     <span class="upload-text">Click to upload or drag images</span>
                 </div>
             </div>
+            <div class="stock-photos-btn-wrapper" style="padding: 8px;">
+                <button id="stockPhotosBtn" class="action-btn secondary" onclick="openStockPhotos()" style="width: 100%; font-size: 13px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    Free Stock Photos
+                </button>
+            </div>
             <div id="photoGalleryList" class="photo-gallery-list">
                 <!-- Photos will be dynamically inserted here -->
             </div>
@@ -298,7 +336,7 @@
                             <line x1="8" y1="11" x2="14" y2="11"/>
                         </svg>
                     </button>
-                    <span id="zoomLevel" class="zoom-label">100%</span>
+                    <span id="zoomLevel" class="zoom-label">65%</span>
                     <button id="zoomInBtn" class="tool-btn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="11" cy="11" r="8"/>
@@ -1151,6 +1189,46 @@
             } else {
                 console.warn('VersionHistory not available');
                 alert('Version history feature is loading. Please try again in a moment.');
+            }
+        };
+
+        // Keyboard Shortcuts Help function
+        window.openKeyboardShortcuts = function() {
+            if (typeof KeyboardShortcuts !== 'undefined' && KeyboardShortcuts.showHelp) {
+                KeyboardShortcuts.showHelp();
+            } else {
+                console.warn('KeyboardShortcuts not available');
+                alert('Keyboard shortcuts help is loading. Press ? to view shortcuts.');
+            }
+        };
+
+        // Stock Photos function
+        window.openStockPhotos = function() {
+            if (typeof StockPhotos !== 'undefined' && StockPhotos.showPanel) {
+                StockPhotos.showPanel();
+            } else if (typeof StockPhotos !== 'undefined' && StockPhotos.renderPanel) {
+                // Create a modal for stock photos
+                let modal = document.getElementById('stockPhotosModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'stockPhotosModal';
+                    modal.className = 'modal';
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width: 900px; max-height: 80vh;">
+                            <div class="modal-header">
+                                <h3>Free Stock Photos</h3>
+                                <button class="modal-close" onclick="document.getElementById('stockPhotosModal').style.display='none'">&times;</button>
+                            </div>
+                            <div class="modal-body" id="stockPhotosContent" style="overflow-y: auto; max-height: 60vh;"></div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    StockPhotos.renderPanel(document.getElementById('stockPhotosContent'));
+                }
+                modal.style.display = 'flex';
+            } else {
+                console.warn('StockPhotos not available');
+                alert('Stock photos feature is loading. Please try again in a moment.');
             }
         };
 

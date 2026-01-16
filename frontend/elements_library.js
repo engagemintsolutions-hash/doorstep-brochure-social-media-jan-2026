@@ -8,20 +8,11 @@
     'use strict';
 
     // ========================================================================
-    // USE EXPANDED LIBRARIES FROM V2
-    // ========================================================================
-
-    // Reference the V2 libraries (loaded before this file)
-    const REAL_ESTATE_ICONS = window.ICONS_LIBRARY || {};
-    const SHAPES = window.SHAPES_LIBRARY || {};
-
-    // Get category helpers
-    const getShapeCategories = window.getShapesByCategory || (() => ({}));
-    const getIconCategories = window.getIconsByCategory || (() => ({}));
-
-    // ========================================================================
     // PANEL RENDERING - Canva-style with tabs, categories, and search
     // ========================================================================
+
+    let renderRetryCount = 0;
+    const MAX_RENDER_RETRIES = 5;
 
     function renderElementsPanel() {
         // Target the specific wrapper, NOT the whole elementsPanel
@@ -32,8 +23,23 @@
             return;
         }
 
+        // Dynamically reference the V2 libraries each time (fixes timing issues)
+        const REAL_ESTATE_ICONS = window.ICONS_LIBRARY || {};
+        const SHAPES = window.SHAPES_LIBRARY || {};
+        const getShapeCategories = window.getShapesByCategory || (() => ({}));
+        const getIconCategories = window.getIconsByCategory || (() => ({}));
+
         const shapeCategories = getShapeCategories();
         const iconCategories = getIconCategories();
+
+        // If libraries not loaded yet, retry after a short delay
+        if (Object.keys(shapeCategories).length === 0 && renderRetryCount < MAX_RENDER_RETRIES) {
+            renderRetryCount++;
+            console.log(`[Elements] V2 library not ready, retry ${renderRetryCount}/${MAX_RENDER_RETRIES}...`);
+            setTimeout(renderElementsPanel, 200);
+            return;
+        }
+        renderRetryCount = 0; // Reset counter on success
 
         // Render shapes by category
         function renderShapeCategories() {
@@ -499,7 +505,8 @@
     }
 
     function createIconElement(iconType, options = {}) {
-        const iconDef = REAL_ESTATE_ICONS[iconType];
+        const iconsLib = window.ICONS_LIBRARY || {};
+        const iconDef = iconsLib[iconType];
         if (!iconDef) {
             console.warn('Unknown icon type:', iconType);
             return null;
@@ -756,8 +763,8 @@
         addAtPosition: addElementAtPosition,
         showProperties: showElementProperties,
         hideProperties: hideElementProperties,
-        ICONS: REAL_ESTATE_ICONS,
-        SHAPES: SHAPES,
+        get ICONS() { return window.ICONS_LIBRARY || {}; },
+        get SHAPES() { return window.SHAPES_LIBRARY || {}; },
         isLoaded: true
     };
 
