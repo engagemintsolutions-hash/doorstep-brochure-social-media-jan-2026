@@ -43,6 +43,12 @@
                         <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/>
                     </svg>
                 </button>
+                <button id="versionHistoryBtn" class="action-btn icon-only" title="Version History" onclick="openVersionHistory()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </button>
             </div>
 
             <button id="toggleChatbotBtn" class="action-btn" title="Transform Text">
@@ -80,6 +86,39 @@
             </button>
         </div>
     </header>
+
+    <!-- Floating Image Tools Toolbar -->
+    <div id="imageToolsToolbar" class="image-tools-toolbar" style="display: none;">
+        <button class="format-btn" id="bgRemovalBtn" title="Remove Background" onclick="openBackgroundRemoval()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-dasharray="4"/>
+                <path d="M12 8v8M8 12h8"/>
+            </svg>
+            <span>Remove BG</span>
+        </button>
+        <button class="format-btn" id="photoEffectsBtn" title="Photo Effects & Filters (40+)" onclick="openPhotoEffects()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+            <span>Filters</span>
+        </button>
+        <button class="format-btn" id="cropImageBtn" title="Crop Image" onclick="openImageCrop()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"/>
+                <path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"/>
+            </svg>
+            <span>Crop</span>
+        </button>
+        <button class="format-btn" id="flipImageBtn" title="Flip Image" onclick="flipSelectedImage()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3"/>
+                <path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/>
+                <line x1="12" y1="3" x2="12" y2="21"/>
+            </svg>
+            <span>Flip</span>
+        </button>
+    </div>
 
     <!-- Floating Text Formatting Toolbar -->
     <div id="textFormatToolbar" class="text-format-toolbar" style="display: none;">
@@ -158,6 +197,14 @@
                 <option value="Verdana, sans-serif">Verdana</option>
             </optgroup>
         </select>
+        <!-- Advanced Font Picker Button -->
+        <button class="format-btn" id="advancedFontsBtn" title="Browse 47+ Fonts" onclick="openAdvancedFontPicker()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 7V4h16v3"/>
+                <path d="M9 20h6"/>
+                <path d="M12 4v16"/>
+            </svg>
+        </button>
         <div class="toolbar-divider"></div>
 
         <!-- Line Height -->
@@ -175,6 +222,22 @@
                    oninput="setTextLetterSpacing(this.value)">
             <span id="letterSpacingValue">0px</span>
         </div>
+        <div class="toolbar-divider"></div>
+
+        <!-- Curved Text Button -->
+        <button class="format-btn" id="curvedTextBtn" title="Curved Text (11 presets)" onclick="openCurvedTextPanel()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12C2 6.5 6.5 2 12 2s10 4.5 10 10"/>
+                <text x="7" y="18" font-size="8" fill="currentColor">Aa</text>
+            </svg>
+        </button>
+
+        <!-- Text Animations Button -->
+        <button class="format-btn" id="textAnimationsBtn" title="Text Animations (22 effects)" onclick="openTextAnimationsPanel()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+        </button>
     </div>
 
     <!-- Main Content Area -->
@@ -421,8 +484,8 @@
             </div>
         </aside>
 
-        <!-- Design Templates Panel -->
-        <aside id="templatesPanel" class="templates-panel">
+        <!-- Design Templates Panel (Overlay) -->
+        <aside id="templatesPanelOverlay" class="templates-panel">
             <div class="panel-header">
                 <h2>🎨 Design Templates</h2>
                 <button id="closeTemplatesBtn" class="close-panel-btn" title="Close">&times;</button>
@@ -601,9 +664,9 @@
     <script src="brochure_templates.js?v=20251020_TEMPLATE_DEBUG"></script>
     <script src="social_media_repurpose.js?v=20251028_SECTION1"></script>
     <script>
-        // Initialize templates panel
+        // Initialize templates panel (overlay)
         document.addEventListener('DOMContentLoaded', () => {
-            const templatesPanel = document.getElementById('templatesPanel');
+            const templatesPanel = document.getElementById('templatesPanelOverlay');
             const openTemplatesBtn = document.getElementById('openTemplatesBtn');
             const closeTemplatesBtn = document.getElementById('closeTemplatesBtn');
             const resetTemplateBtn = document.getElementById('resetTemplateBtn');
@@ -1000,6 +1063,194 @@
         });
 
         console.log('✨ Text formatting toolbar initialized with color pickers');
+
+        // Advanced Font Picker function
+        window.openAdvancedFontPicker = function() {
+            if (typeof FontLoader !== 'undefined' && FontLoader.showFontPicker) {
+                FontLoader.showFontPicker(activeTextElement, (fontFamily) => {
+                    if (activeTextElement) {
+                        activeTextElement.style.fontFamily = fontFamily;
+                        activeTextElement.focus();
+                        if (typeof saveToHistory === 'function') {
+                            saveToHistory('change font');
+                        }
+                    }
+                });
+            } else {
+                console.warn('FontLoader not available, falling back to alert');
+                alert('Advanced font picker is loading. Please try again in a moment.');
+            }
+        };
+
+        // Curved Text Panel function
+        window.openCurvedTextPanel = function() {
+            if (typeof CurvedText !== 'undefined' && CurvedText.renderControls) {
+                // Create a modal for curved text controls
+                let modal = document.getElementById('curvedTextModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'curvedTextModal';
+                    modal.className = 'modal';
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width: 500px;">
+                            <div class="modal-header">
+                                <h3>Curved Text (11 Presets)</h3>
+                                <button class="modal-close" onclick="document.getElementById('curvedTextModal').style.display='none'">&times;</button>
+                            </div>
+                            <div class="modal-body" id="curvedTextControls">
+                                ${CurvedText.renderControls(activeTextElement)}
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                }
+                modal.style.display = 'flex';
+            } else if (typeof CurvedText !== 'undefined' && CurvedText.addToCanvas) {
+                // Fallback: just add curved text to canvas
+                CurvedText.addToCanvas('Curved Text', 'arcUp');
+            } else {
+                console.warn('CurvedText not available');
+                alert('Curved text feature is loading. Please try again in a moment.');
+            }
+        };
+
+        // Text Animations Panel function
+        window.openTextAnimationsPanel = function() {
+            if (typeof TextAnimations !== 'undefined' && TextAnimations.renderPanel) {
+                // Create a modal for text animations
+                let modal = document.getElementById('textAnimationsModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'textAnimationsModal';
+                    modal.className = 'modal';
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width: 600px;">
+                            <div class="modal-header">
+                                <h3>Text Animations (22 Effects)</h3>
+                                <button class="modal-close" onclick="document.getElementById('textAnimationsModal').style.display='none'">&times;</button>
+                            </div>
+                            <div class="modal-body" id="textAnimationsControls"></div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                }
+                const controlsContainer = document.getElementById('textAnimationsControls');
+                controlsContainer.innerHTML = '';
+                TextAnimations.renderPanel(controlsContainer, activeTextElement);
+                modal.style.display = 'flex';
+            } else {
+                console.warn('TextAnimations not available');
+                alert('Text animations feature is loading. Please try again in a moment.');
+            }
+        };
+
+        // Version History function
+        window.openVersionHistory = function() {
+            if (typeof VersionHistory !== 'undefined' && VersionHistory.showPanel) {
+                VersionHistory.showPanel();
+            } else {
+                console.warn('VersionHistory not available');
+                alert('Version history feature is loading. Please try again in a moment.');
+            }
+        };
+
+        // Background Removal function
+        window.openBackgroundRemoval = function() {
+            if (typeof BackgroundRemoval !== 'undefined' && BackgroundRemoval.showModal) {
+                BackgroundRemoval.showModal(window.selectedImageElement);
+            } else {
+                console.warn('BackgroundRemoval not available');
+                alert('Background removal feature is loading. Please try again in a moment.');
+            }
+        };
+
+        // Photo Effects function
+        window.openPhotoEffects = function() {
+            if (typeof PhotoEffects !== 'undefined' && PhotoEffects.show) {
+                PhotoEffects.show(window.selectedImageElement);
+            } else if (typeof PhotoEffects !== 'undefined') {
+                // Create effects panel if show method doesn't exist
+                let modal = document.getElementById('photoEffectsModal');
+                if (!modal) {
+                    const presets = PhotoEffects.getAllPresets ? PhotoEffects.getAllPresets() : [];
+                    modal = document.createElement('div');
+                    modal.id = 'photoEffectsModal';
+                    modal.className = 'modal';
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width: 700px;">
+                            <div class="modal-header">
+                                <h3>Photo Effects & Filters (40+ Presets)</h3>
+                                <button class="modal-close" onclick="document.getElementById('photoEffectsModal').style.display='none'">&times;</button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="effects-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                                    ${presets.map(p => `
+                                        <div class="effect-preset" onclick="PhotoEffects.applyPreset && PhotoEffects.applyPreset(window.selectedImageElement, '${p.id || p}')"
+                                             style="padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; text-align: center;">
+                                            <div style="font-size: 12px;">${p.name || p}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                }
+                modal.style.display = 'flex';
+            } else {
+                console.warn('PhotoEffects not available');
+                alert('Photo effects feature is loading. Please try again in a moment.');
+            }
+        };
+
+        // Image Crop function
+        window.openImageCrop = function() {
+            if (typeof ImageEditor !== 'undefined' && ImageEditor.openCrop) {
+                ImageEditor.openCrop(window.selectedImageElement);
+            } else {
+                console.warn('ImageEditor not available');
+                alert('Image crop feature is loading. Please try again in a moment.');
+            }
+        };
+
+        // Flip Image function
+        window.flipSelectedImage = function() {
+            if (window.selectedImageElement) {
+                const currentTransform = window.selectedImageElement.style.transform || '';
+                if (currentTransform.includes('scaleX(-1)')) {
+                    window.selectedImageElement.style.transform = currentTransform.replace('scaleX(-1)', 'scaleX(1)');
+                } else {
+                    window.selectedImageElement.style.transform = currentTransform + ' scaleX(-1)';
+                }
+                if (typeof saveToHistory === 'function') {
+                    saveToHistory('flip image');
+                }
+            }
+        };
+
+        // Track selected image element for image tools
+        window.selectedImageElement = null;
+
+        // Show image tools when clicking on images
+        document.addEventListener('click', (e) => {
+            const img = e.target.closest('img, .brochure-image, .gallery-image');
+            const imageToolbar = document.getElementById('imageToolsToolbar');
+
+            if (img && img.tagName === 'IMG') {
+                window.selectedImageElement = img;
+                if (imageToolbar) {
+                    imageToolbar.style.display = 'flex';
+                    const rect = img.getBoundingClientRect();
+                    imageToolbar.style.left = `${rect.left}px`;
+                    imageToolbar.style.top = `${rect.top - 50}px`;
+                }
+            } else if (!e.target.closest('#imageToolsToolbar')) {
+                window.selectedImageElement = null;
+                if (imageToolbar) {
+                    imageToolbar.style.display = 'none';
+                }
+            }
+        });
 
         // Line Height and Letter Spacing functions
         window.setTextLineHeight = function(value) {
