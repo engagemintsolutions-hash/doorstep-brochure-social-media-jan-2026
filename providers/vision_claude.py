@@ -130,33 +130,49 @@ class VisionClaudeClient:
             return "image/jpeg"  # Default
 
     def _build_analysis_prompt(self) -> str:
-        """Build the prompt for Claude to analyze the property image."""
-        return """Analyze this property photograph and identify SPECIFIC PROPERTY FEATURES visible in the image.
+        """Build the prompt for Claude to analyze the property image with JSON output."""
+        return """Analyze this property photograph and identify SPECIFIC PHYSICAL FEATURES visible in the image.
 
-ROOM_TYPE: [kitchen|bedroom|bathroom|living_room|dining_room|garden|exterior|hallway|office|garage|other]
+You MUST respond with ONLY valid JSON in this exact format:
+{
+  "room_type": "kitchen|bedroom|bathroom|living_room|dining_room|garden|exterior|hallway|office|garage|other",
+  "detected_features": ["feature1", "feature2"],
+  "finishes": ["finish1", "finish2"],
+  "light_level": "bright|moderate|dim",
+  "view_hint": "garden_view|street_view|park_view|null",
+  "interior": true|false,
+  "orientation_hint": "north_facing|south_facing|east_facing|west_facing|front_aspect|rear_aspect|null",
+  "caption": "8-20 word property caption describing what you see"
+}
 
-DETECTED_FEATURES: List ONLY physical features actually visible, such as: fireplace, garden, driveway, garage, parking, bay_window, sash_windows, french_doors, patio, balcony, terrace, decking, swimming_pool, conservatory, ensuite, walk_in_wardrobe, fitted_wardrobes, kitchen_island, breakfast_bar, range_cooker, exposed_beams, skylights, bifold_doors, double_glazing, etc.
+VALID FEATURES (only list if ACTUALLY VISIBLE):
+- Structural: fireplace, bay_window, sash_windows, french_doors, bifold_doors, skylights, exposed_beams, conservatory
+- Outdoor: garden, driveway, garage, parking, patio, balcony, terrace, decking, swimming_pool
+- Kitchen: kitchen_island, breakfast_bar, range_cooker, integrated_appliances
+- Bedroom: ensuite, walk_in_wardrobe, fitted_wardrobes
 
-FINISHES: List visible materials/finishes such as: hardwood_floors, granite_countertops, marble_flooring, porcelain_tiles, stainless_steel_appliances, integrated_appliances, recessed_lighting, pendant_lighting, underfloor_heating, etc.
+VALID FINISHES (only list if ACTUALLY VISIBLE):
+- Floors: hardwood_floors, marble_flooring, porcelain_tiles, carpet
+- Surfaces: granite_countertops, quartz_worktops, wooden_worktops
+- Appliances: stainless_steel_appliances, integrated_appliances
+- Lighting: recessed_lighting, pendant_lighting, chandeliers
 
-LIGHT_LEVEL: [bright|moderate|dim]
-
-VIEW_HINT: [garden_view|street_view|park_view|none]
-
-INTERIOR: [true|false]
-
-ORIENTATION_HINT: [north_facing|south_facing|east_facing|west_facing|front_aspect|rear_aspect|none]
-
-CAPTION: [Write a compelling 8-20 word property caption]
-
-CRITICAL: Only list features you can ACTUALLY SEE in this specific photo. Do not list generic quality terms like "well_presented" or "modern_finish". Be specific about physical features, fixtures, and materials."""
+CRITICAL RULES:
+1. Only list features/finishes you can ACTUALLY SEE - do not guess or assume
+2. If uncertain, leave arrays empty []
+3. NEVER use subjective terms like: well_presented, modern, attractive, stunning, beautiful, quality, excellent
+4. Caption must describe VISIBLE elements only
+5. Respond with ONLY the JSON object, no other text"""
 
     def _parse_claude_response(self, response_text: str, filename: str) -> Dict:
-        """Parse Claude's structured response into a dict."""
-        lines = response_text.strip().split('\n')
+        """Parse Claude's JSON response into a dict."""
+        import json
+        import re
+
+        # Default result structure
         result = {
             "filename": filename,
-            "room_type": "living_room",
+            "room_type": "other",
             "detected_features": [],
             "finishes": [],
             "light_level": "moderate",
@@ -166,30 +182,72 @@ CRITICAL: Only list features you can ACTUALLY SEE in this specific photo. Do not
             "suggested_caption": ""
         }
 
+        try:
+            # Try to extract JSON from the response (in case there's extra text)
+            json_match = re.search(r'\{[\s\S]*\}', response_text)
+            if json_match:
+                json_str = json_match.group()
+                parsed = json.loads(json_str)
+
+                # Map parsed values to result
+                if 'room_type' in parsed:
+                    result['room_type'] = str(parsed['room_type']).lower()
+                if 'detected_features' in parsed and isinstance(parsed['detected_features'], list):
+                    result['detected_features'] = [str(f).strip() for f in parsed['detected_features'] if f]
+                if 'finishes' in parsed and isinstance(parsed['finishes'], list):
+                    result['finishes'] = [str(f).strip() for f in parsed['finishes'] if f]
+                if 'light_level' in parsed:
+                    result['light_level'] = str(parsed['light_level']).lower()
+                if 'view_hint' in parsed:
+                    vh = parsed['view_hint']
+                    result['view_hint'] = None if vh in [None, 'null', 'none'] else str(vh).lower()
+                if 'interior' in parsed:
+                    result['interior'] = bool(parsed['interior'])
+                if 'orientation_hint' in parsed:
+                    oh = parsed['orientation_hint']
+                    result['orientation_hint'] = None if oh in [None, 'null', 'none'] else str(oh).lower()
+                if 'caption' in parsed:
+                    result['suggested_caption'] = str(parsed['caption'])
+
+                logger.debug(f"Successfully parsed JSON response for {filename}")
+            else:
+                logger.warning(f"No JSON found in response for {filename}, falling back to text parsing")
+                result = self._parse_text_response(response_text, filename, result)
+
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON parse error for {filename}: {e}, falling back to text parsing")
+            result = self._parse_text_response(response_text, filename, result)
+
+        return result
+
+    def _parse_text_response(self, response_text: str, filename: str, result: Dict) -> Dict:
+        """Fallback text parser for non-JSON responses."""
+        lines = response_text.strip().split('\n')
+
         for line in lines:
             line = line.strip()
             if ':' not in line:
                 continue
 
             key, value = line.split(':', 1)
-            key = key.strip().lower()
-            value = value.strip()
+            key = key.strip().lower().replace('"', '').replace("'", "")
+            value = value.strip().strip('"').strip("'")
 
-            if key == 'room_type':
+            if 'room_type' in key:
                 result['room_type'] = value.lower()
-            elif key == 'detected_features':
-                result['detected_features'] = [f.strip() for f in value.split(',') if f.strip()]
-            elif key == 'finishes':
-                result['finishes'] = [f.strip() for f in value.split(',') if f.strip()]
-            elif key == 'light_level':
+            elif 'detected_features' in key or 'features' in key:
+                result['detected_features'] = [f.strip().strip('"') for f in value.split(',') if f.strip()]
+            elif 'finishes' in key:
+                result['finishes'] = [f.strip().strip('"') for f in value.split(',') if f.strip()]
+            elif 'light_level' in key:
                 result['light_level'] = value.lower()
-            elif key == 'view_hint':
-                result['view_hint'] = None if value.lower() == 'none' else value.lower()
-            elif key == 'interior':
+            elif 'view_hint' in key:
+                result['view_hint'] = None if value.lower() in ['none', 'null'] else value.lower()
+            elif 'interior' in key:
                 result['interior'] = value.lower() == 'true'
-            elif key == 'orientation_hint':
-                result['orientation_hint'] = None if value.lower() == 'none' else value.lower()
-            elif key == 'caption':
+            elif 'orientation' in key:
+                result['orientation_hint'] = None if value.lower() in ['none', 'null'] else value.lower()
+            elif 'caption' in key:
                 result['suggested_caption'] = value
 
         return result
