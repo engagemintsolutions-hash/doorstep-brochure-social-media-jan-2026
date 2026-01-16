@@ -109,6 +109,7 @@ from services.brochure_session_service import BrochureSessionService
 from services.photo_scorer import get_photo_scorer
 from services.post_scheduler import start_scheduler, stop_scheduler
 from services.background_remover import get_background_remover
+from services.hashtag_service import get_hashtag_service, HashtagService
 from providers import VisionProvider, make_vision_client
 from providers.geocoding_client import GeocodingClient
 from providers.places_client import PlacesClient
@@ -3762,11 +3763,100 @@ async def generate_social_post_endpoint(request: Request):
             image_url=image_url
         )
 
+        # Enhance hashtags with curated database
+        try:
+            hashtag_service = get_hashtag_service()
+            curated_hashtags = await hashtag_service.get_hashtags(
+                property_type=property_type,
+                location=address,
+                features=features_list,
+                platform=platform,
+                max_hashtags=15
+            )
+
+            # Merge AI-generated and curated hashtags (AI first, then curated)
+            ai_hashtags = result.get("hashtags", [])
+            all_hashtags = ai_hashtags.copy()
+
+            # Add curated hashtags not already present
+            for tag in curated_hashtags.get("hashtags", []):
+                tag_lower = tag.lower()
+                if not any(t.lower() == tag_lower for t in all_hashtags):
+                    all_hashtags.append(tag)
+
+            # Limit based on platform
+            if platform.lower() == "twitter":
+                all_hashtags = all_hashtags[:3]
+            elif platform.lower() == "facebook":
+                all_hashtags = all_hashtags[:5]
+            else:  # Instagram
+                all_hashtags = all_hashtags[:15]
+
+            result["hashtags"] = all_hashtags
+            result["hashtag_sources"] = {
+                "ai_generated": len(ai_hashtags),
+                "curated_added": len(all_hashtags) - len(ai_hashtags),
+                "categories": curated_hashtags.get("categories_used", [])
+            }
+            result["optimization_notes"] = curated_hashtags.get("optimization_notes", "")
+
+        except Exception as e:
+            logger.warning(f"Failed to enhance hashtags: {e}")
+
         logger.info(f"Generated {platform} post for {property_name}")
         return result
 
     except Exception as e:
         logger.error(f"Failed to generate social post: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@fastapi_app.post("/marketing/hashtags")
+async def get_optimized_hashtags(request: Request):
+    """
+    Get optimized hashtags for a property listing.
+
+    Returns curated, location-based, and property-specific hashtags
+    from a database of proven high-engagement UK property hashtags.
+    """
+    try:
+        form_data = await request.form()
+        data = dict(form_data)
+
+        property_type = data.get('property_type')
+        location = data.get('location') or data.get('address')
+        target_audience = data.get('target_audience')
+        features = data.get('features')
+        platform = data.get('platform', 'instagram')
+
+        # Parse features if JSON string
+        features_list = None
+        if features:
+            import json
+            try:
+                features_list = json.loads(features)
+            except:
+                features_list = [features]
+
+        hashtag_service = get_hashtag_service()
+        result = await hashtag_service.get_hashtags(
+            property_type=property_type,
+            location=location,
+            target_audience=target_audience,
+            features=features_list,
+            platform=platform,
+            max_hashtags=15
+        )
+
+        # Add trending hashtags
+        trending = await hashtag_service.get_trending_hashtags()
+        result["trending_hashtags"] = trending
+
+        logger.info(f"Generated {result['count']} hashtags for {property_type or 'property'} in {location or 'UK'}")
+        return result
+
+    except Exception as e:
+        logger.error(f"Failed to get hashtags: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
