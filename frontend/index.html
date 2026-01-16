@@ -641,48 +641,285 @@
         // ============================================================
         // TEMPLATE SELECTION
         // ============================================================
+        // Real brochure templates with actual layouts and shapes
         const templates = [
-            // Premium Estate Agency Templates
-            { id: 'savills_classic', name: 'Savills Classic', desc: 'Cream, red & gold elegance', primary: '#CE171E', secondary: '#FFE850', text: '#2d2d2d', bg: '#FAF9F6' },
-            { id: 'knight_frank', name: 'Knight Frank', desc: 'Rich red & heritage green', primary: '#B8232E', secondary: '#2D5832', text: '#1a1411', bg: '#FFFEFA' },
-            { id: 'hamptons', name: 'Hamptons', desc: 'Navy & champagne luxury', primary: '#1B3A57', secondary: '#E8D5B5', text: '#1a2433', bg: '#FFFDF9' },
-            { id: 'foxtons', name: 'Foxtons', desc: 'Racing green & yellow', primary: '#004225', secondary: '#FFE500', text: '#1a2f1f', bg: '#FCFCFA' },
-            { id: 'strutt_parker', name: 'Strutt & Parker', desc: 'Country green & cream', primary: '#2B5940', secondary: '#B8A888', text: '#1f2d24', bg: '#F9F8F3' },
+            // ========== LUXURY LAYOUTS ==========
+            {
+                id: 'luxury_estate',
+                name: 'Luxury Estate',
+                category: 'Luxury',
+                desc: 'Elegant bottom bar with gold accent line',
+                primary: '#1a1a2e',
+                secondary: '#c9a227',
+                text: '#2d2d2d',
+                bg: '#fefefe',
+                layout: 'bottom-overlay',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
+                        <div style="position:absolute;bottom:0;left:0;right:0;height:35%;background:${t.primary};opacity:0.9;"></div>
+                        <div style="position:absolute;bottom:35%;left:10%;right:10%;height:2px;background:${t.secondary};"></div>
+                        <div style="position:absolute;top:0;left:0;border-style:solid;border-width:20px 20px 0 0;border-color:${t.secondary} transparent transparent transparent;"></div>
+                    </div>`
+            },
+            {
+                id: 'premium_gold',
+                name: 'Premium Gold',
+                category: 'Luxury',
+                desc: 'Black with gold frame border',
+                primary: '#000000',
+                secondary: '#d4af37',
+                text: '#333333',
+                bg: '#ffffff',
+                layout: 'framed',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
+                        <div style="position:absolute;inset:8%;border:3px solid ${t.secondary};"></div>
+                        <div style="position:absolute;bottom:15%;left:15%;right:15%;height:20%;background:${t.primary};opacity:0.85;"></div>
+                    </div>`
+            },
+            {
+                id: 'champagne_elegance',
+                name: 'Champagne Elegance',
+                category: 'Luxury',
+                desc: 'Subtle gradient with centered text area',
+                primary: '#2c2c2c',
+                secondary: '#d4c5a9',
+                text: '#1a1a1a',
+                bg: '#fffef9',
+                layout: 'centered-panel',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#d4c5a9 0%,#ccc 30%,#999 100%);">
+                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;height:30%;background:${t.bg};border:1px solid ${t.secondary};"></div>
+                    </div>`
+            },
 
-            // Modern & Stylish Templates
-            { id: 'luxury_noir', name: 'Luxury Noir', desc: 'Black & gold premium', primary: '#000000', secondary: '#FFD700', text: '#1a1a1a', bg: '#FAFAFA' },
-            { id: 'coastal_azure', name: 'Coastal Azure', desc: 'Ocean blue & sand', primary: '#0077BE', secondary: '#E8D5B7', text: '#1a3647', bg: '#F8FBFD' },
-            { id: 'urban_slate', name: 'Urban Slate', desc: 'Slate & electric blue', primary: '#334155', secondary: '#3B82F6', text: '#1e293b', bg: '#F9FAFB' },
-            { id: 'mayfair_emerald', name: 'Mayfair Emerald', desc: 'Emerald & champagne', primary: '#1B4D3E', secondary: '#E8D5B5', text: '#1B2E25', bg: '#F9F8F5' },
-            { id: 'rose_garden', name: 'Rose Garden', desc: 'Rose & forest green', primary: '#9B4F5C', secondary: '#2D5832', text: '#3d2b2f', bg: '#FFF9F9' },
+            // ========== MODERN LAYOUTS ==========
+            {
+                id: 'modern_sidebar',
+                name: 'Modern Sidebar',
+                category: 'Modern',
+                desc: 'Bold side panel with accent stripe',
+                primary: '#2d3436',
+                secondary: '#0984e3',
+                text: '#2d3436',
+                bg: '#ffffff',
+                layout: 'side-panel',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
+                        <div style="position:absolute;top:0;left:0;width:30%;height:100%;background:${t.primary};"></div>
+                        <div style="position:absolute;top:20%;left:28%;width:4px;height:60%;background:${t.secondary};"></div>
+                    </div>`
+            },
+            {
+                id: 'contemporary_angle',
+                name: 'Contemporary Angle',
+                category: 'Modern',
+                desc: 'Dynamic angled overlay',
+                primary: '#1e272e',
+                secondary: '#ff6b6b',
+                text: '#2d3436',
+                bg: '#f8f9fa',
+                layout: 'angled',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);overflow:hidden;">
+                        <div style="position:absolute;bottom:-10%;left:-5%;right:-5%;height:50%;background:${t.primary};transform:rotate(-5deg);"></div>
+                        <div style="position:absolute;bottom:42%;left:0;right:0;height:3px;background:${t.secondary};transform:rotate(-5deg);"></div>
+                    </div>`
+            },
+            {
+                id: 'urban_minimal',
+                name: 'Urban Minimal',
+                category: 'Modern',
+                desc: 'Clean bottom bar with circle badge',
+                primary: '#34495e',
+                secondary: '#e67e22',
+                text: '#2c3e50',
+                bg: '#ffffff',
+                layout: 'badge-corner',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
+                        <div style="position:absolute;bottom:0;left:0;right:0;height:18%;background:${t.primary};"></div>
+                        <div style="position:absolute;top:8%;right:8%;width:24px;height:24px;background:${t.secondary};border-radius:50%;"></div>
+                    </div>`
+            },
 
-            // Contemporary Templates
-            { id: 'minimalist_white', name: 'Minimalist White', desc: 'Clean & modern', primary: '#111827', secondary: '#6B7280', text: '#111827', bg: '#FFFFFF' },
-            { id: 'nordic_frost', name: 'Nordic Frost', desc: 'Cool grays & ice blue', primary: '#2E5266', secondary: '#D1E8E2', text: '#1a2933', bg: '#FFFFFF' },
-            { id: 'tuscan_warmth', name: 'Tuscan Warmth', desc: 'Terracotta & olive', primary: '#C1440E', secondary: '#828E36', text: '#3d2817', bg: '#FBF9F6' },
-            { id: 'manhattan_platinum', name: 'Manhattan', desc: 'Platinum & charcoal', primary: '#2C3539', secondary: '#C0C0C0', text: '#1a1d1f', bg: '#FCFCFC' },
-            { id: 'countryside_sage', name: 'Countryside Sage', desc: 'Sage & natural stone', primary: '#6B8E6F', secondary: '#B8A890', text: '#2d3d2f', bg: '#F7F9F5' },
+            // ========== CLASSIC LAYOUTS ==========
+            {
+                id: 'classic_heritage',
+                name: 'Classic Heritage',
+                category: 'Classic',
+                desc: 'Traditional ornate double border',
+                primary: '#4a3728',
+                secondary: '#8b7355',
+                text: '#3d3d3d',
+                bg: '#fffef9',
+                layout: 'double-frame',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:${t.bg};">
+                        <div style="position:absolute;inset:5%;border:2px solid ${t.primary};"></div>
+                        <div style="position:absolute;inset:8%;border:1px solid ${t.secondary};"></div>
+                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;height:60%;background:linear-gradient(180deg,#ccc 0%,#999 100%);"></div>
+                    </div>`
+            },
+            {
+                id: 'country_manor',
+                name: 'Country Manor',
+                category: 'Classic',
+                desc: 'Green header and footer bands',
+                primary: '#2d5a27',
+                secondary: '#8b6914',
+                text: '#3a3a3a',
+                bg: '#fdfcf8',
+                layout: 'bands',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
+                        <div style="position:absolute;top:0;left:0;right:0;height:12%;background:${t.primary};"></div>
+                        <div style="position:absolute;bottom:0;left:0;right:0;height:20%;background:${t.primary};"></div>
+                        <div style="position:absolute;top:12%;left:30%;right:30%;height:2px;background:${t.secondary};"></div>
+                    </div>`
+            },
+            {
+                id: 'victorian_charm',
+                name: 'Victorian Charm',
+                category: 'Classic',
+                desc: 'Corner accents with center divider',
+                primary: '#5c3d2e',
+                secondary: '#a67c52',
+                text: '#3d2b1f',
+                bg: '#faf8f5',
+                layout: 'corners',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
+                        <div style="position:absolute;top:5%;left:5%;width:15%;height:15%;border-top:3px solid ${t.primary};border-left:3px solid ${t.primary};"></div>
+                        <div style="position:absolute;top:5%;right:5%;width:15%;height:15%;border-top:3px solid ${t.primary};border-right:3px solid ${t.primary};"></div>
+                        <div style="position:absolute;bottom:5%;left:5%;width:15%;height:15%;border-bottom:3px solid ${t.primary};border-left:3px solid ${t.primary};"></div>
+                        <div style="position:absolute;bottom:5%;right:5%;width:15%;height:15%;border-bottom:3px solid ${t.primary};border-right:3px solid ${t.primary};"></div>
+                        <div style="position:absolute;bottom:25%;left:20%;right:20%;height:1px;background:${t.secondary};"></div>
+                    </div>`
+            },
 
-            // Vibrant Portal Templates
-            { id: 'rightmove', name: 'Rightmove', desc: 'Turquoise & cherry', primary: '#00B2A9', secondary: '#E94B6F', text: '#1a1a1a', bg: '#FFFFFF' },
-            { id: 'zoopla', name: 'Zoopla Purple', desc: 'Vibrant purple', primary: '#7B2CBF', secondary: '#C77DFF', text: '#2d2033', bg: '#FDFCFF' },
-            { id: 'onthemarket', name: 'OnTheMarket', desc: 'Teal & coral', primary: '#00A19A', secondary: '#FF6B6B', text: '#1a2f2e', bg: '#FFFFFF' },
+            // ========== MINIMAL LAYOUTS ==========
+            {
+                id: 'swiss_grid',
+                name: 'Swiss Grid',
+                category: 'Minimal',
+                desc: 'Bold typography, red square accent',
+                primary: '#000000',
+                secondary: '#ff0000',
+                text: '#1a1a1a',
+                bg: '#ffffff',
+                layout: 'grid-accent',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#eee 0%,#ccc 100%);">
+                        <div style="position:absolute;bottom:10%;left:8%;width:70%;height:3px;background:${t.primary};"></div>
+                        <div style="position:absolute;bottom:8%;right:8%;width:12%;height:20%;background:${t.secondary};"></div>
+                    </div>`
+            },
+            {
+                id: 'pure_white',
+                name: 'Pure White',
+                category: 'Minimal',
+                desc: 'Maximum whitespace, single line',
+                primary: '#1a1a1a',
+                secondary: '#666666',
+                text: '#333333',
+                bg: '#ffffff',
+                layout: 'single-line',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#f5f5f5 0%,#ddd 100%);">
+                        <div style="position:absolute;bottom:12%;left:15%;right:15%;height:1px;background:${t.primary};"></div>
+                    </div>`
+            },
+            {
+                id: 'nordic_clean',
+                name: 'Nordic Clean',
+                category: 'Minimal',
+                desc: 'Soft colors with subtle frame',
+                primary: '#2E5266',
+                secondary: '#D1E8E2',
+                text: '#1a2933',
+                bg: '#ffffff',
+                layout: 'soft-frame',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#e8f4f2 0%,#ccd9d6 100%);">
+                        <div style="position:absolute;inset:10%;border:1px solid ${t.primary};opacity:0.5;"></div>
+                        <div style="position:absolute;bottom:15%;left:50%;transform:translateX(-50%);width:30%;height:2px;background:${t.primary};"></div>
+                    </div>`
+            },
+
+            // ========== BOLD LAYOUTS ==========
+            {
+                id: 'bold_split',
+                name: 'Bold Split',
+                category: 'Bold',
+                desc: 'High contrast top section',
+                primary: '#ff5722',
+                secondary: '#212121',
+                text: '#212121',
+                bg: '#ffffff',
+                layout: 'top-heavy',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
+                        <div style="position:absolute;top:0;left:0;right:0;height:40%;background:${t.primary};"></div>
+                        <div style="position:absolute;top:8%;right:8%;width:18px;height:18px;background:${t.secondary};border-radius:50%;"></div>
+                    </div>`
+            },
+            {
+                id: 'neon_edge',
+                name: 'Neon Edge',
+                category: 'Bold',
+                desc: 'Dark theme with gradient glow',
+                primary: '#0f0f23',
+                secondary: '#00d4ff',
+                text: '#ffffff',
+                bg: '#0f0f23',
+                layout: 'dark-gradient',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:${t.primary};">
+                        <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,212,255,0.2) 0%,rgba(255,0,255,0.2) 100%);"></div>
+                        <div style="position:absolute;bottom:25%;left:10%;right:10%;height:2px;background:${t.secondary};box-shadow:0 0 10px ${t.secondary};"></div>
+                    </div>`
+            },
+            {
+                id: 'geometric_pop',
+                name: 'Geometric Pop',
+                category: 'Bold',
+                desc: 'Playful circles and shapes',
+                primary: '#6c5ce7',
+                secondary: '#00cec9',
+                text: '#2d3436',
+                bg: '#ffffff',
+                layout: 'shapes',
+                previewHTML: (t) => `
+                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);overflow:hidden;">
+                        <div style="position:absolute;top:-15%;left:-15%;width:50%;height:50%;background:${t.primary};border-radius:50%;opacity:0.8;"></div>
+                        <div style="position:absolute;bottom:-10%;right:-10%;width:40%;height:40%;background:${t.secondary};border-radius:50%;opacity:0.8;"></div>
+                        <div style="position:absolute;bottom:10%;left:10%;right:10%;height:20%;background:rgba(255,255,255,0.9);"></div>
+                    </div>`
+            },
         ];
 
-        let selectedTemplate = templates[0]; // Default to Savills Classic
+        let selectedTemplate = templates[0]; // Default to first template
 
         function renderTemplates() {
             const grid = document.getElementById('templateGrid');
-            grid.innerHTML = templates.map(t => `
-                <div class="template-card ${t.id === selectedTemplate.id ? 'selected' : ''}" data-template-id="${t.id}">
-                    <div class="template-preview">
-                        <div class="color-bar" style="background: ${t.primary};"></div>
-                        <div class="color-bar" style="background: ${t.secondary};"></div>
-                        <div class="color-bar" style="background: ${t.bg}; border-left: 2px solid ${t.text};"></div>
-                    </div>
-                    <div class="template-name">${t.name}</div>
-                    <div class="template-desc">${t.desc}</div>
+
+            // Group by category
+            const categories = [...new Set(templates.map(t => t.category))];
+
+            grid.innerHTML = categories.map(cat => `
+                <div class="template-category" style="grid-column: 1 / -1; margin-top: 15px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">${cat}</h4>
                 </div>
+                ${templates.filter(t => t.category === cat).map(t => `
+                    <div class="template-card ${t.id === selectedTemplate.id ? 'selected' : ''}" data-template-id="${t.id}">
+                        <div class="template-preview" style="border-radius:4px;overflow:hidden;">
+                            ${t.previewHTML(t)}
+                        </div>
+                        <div class="template-name">${t.name}</div>
+                        <div class="template-desc">${t.desc}</div>
+                    </div>
+                `).join('')}
             `).join('');
 
             // Add click handlers
