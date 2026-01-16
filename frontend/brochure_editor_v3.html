@@ -363,6 +363,25 @@
                         </svg>
                         Templates
                     </button>
+                    <button id="openBrandKitBtn" class="tool-btn" title="Brand Kit - Colors, Fonts, Logos" onclick="openBrandKit()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="13.5" cy="6.5" r="2.5"/>
+                            <circle cx="17.5" cy="10.5" r="2.5"/>
+                            <circle cx="8.5" cy="7.5" r="2.5"/>
+                            <circle cx="6.5" cy="12.5" r="2.5"/>
+                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2z"/>
+                        </svg>
+                        Brand Kit
+                    </button>
+                    <button id="openMagicResizeBtn" class="tool-btn" title="Magic Resize - Create Different Formats" onclick="openMagicResize()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 3 21 3 21 9"/>
+                            <polyline points="9 21 3 21 3 15"/>
+                            <line x1="21" y1="3" x2="14" y2="10"/>
+                            <line x1="3" y1="21" x2="10" y2="14"/>
+                        </svg>
+                        Magic Resize
+                    </button>
                 </div>
             </div>
 
@@ -1202,6 +1221,62 @@
             }
         };
 
+        // Brand Kit function
+        window.openBrandKit = function() {
+            if (typeof BrandKit !== 'undefined' && BrandKit.renderPanel) {
+                let modal = document.getElementById('brandKitModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'brandKitModal';
+                    modal.className = 'modal';
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width: 500px;">
+                            <div class="modal-header">
+                                <h3>Brand Kit</h3>
+                                <button class="modal-close" onclick="document.getElementById('brandKitModal').style.display='none'">&times;</button>
+                            </div>
+                            <div class="modal-body" id="brandKitContent"></div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    BrandKit.renderPanel(document.getElementById('brandKitContent'));
+                }
+                modal.style.display = 'flex';
+            } else {
+                console.warn('BrandKit not available');
+                alert('Brand Kit feature is loading. Please try again in a moment.');
+            }
+        };
+
+        // Magic Resize function
+        window.openMagicResize = function() {
+            if (typeof MagicResize !== 'undefined' && MagicResize.showPanel) {
+                MagicResize.showPanel();
+            } else if (typeof MagicResize !== 'undefined' && MagicResize.renderPanel) {
+                let modal = document.getElementById('magicResizeModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'magicResizeModal';
+                    modal.className = 'modal';
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width: 600px;">
+                            <div class="modal-header">
+                                <h3>Magic Resize</h3>
+                                <button class="modal-close" onclick="document.getElementById('magicResizeModal').style.display='none'">&times;</button>
+                            </div>
+                            <div class="modal-body" id="magicResizeContent"></div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    MagicResize.renderPanel(document.getElementById('magicResizeContent'));
+                }
+                modal.style.display = 'flex';
+            } else {
+                console.warn('MagicResize not available');
+                alert('Magic Resize feature is loading. Please try again in a moment.');
+            }
+        };
+
         // Stock Photos function
         window.openStockPhotos = function() {
             if (typeof StockPhotos !== 'undefined' && StockPhotos.showPanel) {
@@ -1283,11 +1358,20 @@
 
         // Image Crop function
         window.openImageCrop = function() {
-            if (typeof ImageEditor !== 'undefined' && ImageEditor.openCrop) {
-                ImageEditor.openCrop(window.selectedImageElement);
+            if (window.selectedImageElement) {
+                // First select the image in the ImageEditor
+                if (typeof selectImage === 'function') {
+                    selectImage(window.selectedImageElement);
+                }
+                // Then toggle crop mode
+                if (typeof toggleCropMode === 'function') {
+                    setTimeout(() => toggleCropMode(), 100);
+                } else {
+                    console.warn('toggleCropMode not available');
+                    alert('Click on an image to access crop mode in the Image Settings panel.');
+                }
             } else {
-                console.warn('ImageEditor not available');
-                alert('Image crop feature is loading. Please try again in a moment.');
+                alert('Please select an image first by clicking on it.');
             }
         };
 

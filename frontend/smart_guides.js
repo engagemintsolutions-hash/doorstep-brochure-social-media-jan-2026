@@ -31,20 +31,29 @@ const SmartGuides = (function() {
     function init(canvasElement) {
         canvas = canvasElement;
 
-        // Create guides container
-        guidesContainer = document.createElement('div');
-        guidesContainer.className = 'smart-guides-container';
-        guidesContainer.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9999;
-        `;
-        canvas.style.position = 'relative';
-        canvas.appendChild(guidesContainer);
+        // Check if AlignmentSystem already created a guides container
+        const existingContainer = document.getElementById('smartGuidesContainer') ||
+                                   canvas.querySelector('.smart-guides-container');
+
+        if (existingContainer) {
+            guidesContainer = existingContainer;
+            console.log('[SmartGuides] Reusing existing guides container from AlignmentSystem');
+        } else {
+            // Create guides container
+            guidesContainer = document.createElement('div');
+            guidesContainer.className = 'smart-guides-container';
+            guidesContainer.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 9999;
+            `;
+            canvas.style.position = 'relative';
+            canvas.appendChild(guidesContainer);
+        }
 
         // Add styles
         addStyles();
