@@ -247,6 +247,30 @@ body {
     color: var(--text-inverse);
 }
 
+/* Property Tools Toolbar */
+.property-tools {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding-left: var(--spacing-md);
+    border-left: 1px solid var(--border-color);
+    margin-left: var(--spacing-sm);
+}
+
+.property-tools .tool-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 10px;
+    font-size: 10px;
+    min-width: 55px;
+}
+
+.property-tools .tool-btn svg {
+    flex-shrink: 0;
+}
+
 .action-btn.primary:hover:not(:disabled) {
     background: var(--primary-hover);
     border-color: var(--primary-hover);

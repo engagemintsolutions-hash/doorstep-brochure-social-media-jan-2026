@@ -515,6 +515,41 @@
                         Magic Resize
                     </button>
                 </div>
+                <div class="property-tools">
+                    <button id="openPropertyBadgesBtn" class="tool-btn" title="Property Badges - SOLD, FOR SALE, EPC" onclick="openPropertyBadges()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                            <line x1="7" y1="7" x2="7.01" y2="7"/>
+                        </svg>
+                        Badges
+                    </button>
+                    <button id="openPropertyChartsBtn" class="tool-btn" title="Property Charts - Area comparison, prices" onclick="openPropertyCharts()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                            <line x1="2" y1="20" x2="22" y2="20"/>
+                        </svg>
+                        Charts
+                    </button>
+                    <button id="openAIContentBtn" class="tool-btn" title="AI Content - Generate property descriptions" onclick="openAIContent()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+                            <circle cx="8" cy="14" r="1"/>
+                            <circle cx="16" cy="14" r="1"/>
+                        </svg>
+                        AI Text
+                    </button>
+                    <button id="openPropertyGraphicsBtn" class="tool-btn" title="Property Graphics - Icons, symbols, decorations" onclick="openPropertyGraphics()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"/>
+                            <rect x="14" y="3" width="7" height="7"/>
+                            <rect x="14" y="14" width="7" height="7"/>
+                            <rect x="3" y="14" width="7" height="7"/>
+                        </svg>
+                        Graphics
+                    </button>
+                </div>
             </div>
 
             <div class="canvas-container" id="canvasContainer">
@@ -1924,6 +1959,74 @@
                 if (gridOverlay) {
                     gridOverlay.style.display = 'none';
                 }
+            }
+        };
+
+        // Property Tools Functions
+        window.openPropertyBadges = function() {
+            if (typeof BritishBadges !== 'undefined' && BritishBadges.renderPanel) {
+                // Create modal for badges
+                let modal = document.getElementById('badgesModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'badgesModal';
+                    modal.className = 'modal';
+                    modal.innerHTML = `
+                        <div class="modal-content" style="width: 600px; max-height: 80vh; overflow-y: auto;">
+                            <div class="modal-header">
+                                <h2>Property Badges</h2>
+                                <button class="modal-close" onclick="document.getElementById('badgesModal').classList.remove('visible')">&times;</button>
+                            </div>
+                            <div class="modal-body" id="badgesPanelContent" style="padding: 20px;"></div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                }
+                BritishBadges.renderPanel('badgesPanelContent');
+                modal.classList.add('visible');
+            } else {
+                alert('Property Badges module is loading. Please try again.');
+            }
+        };
+
+        window.openPropertyCharts = function() {
+            if (typeof PropertyCharts !== 'undefined' && PropertyCharts.renderPanel) {
+                let modal = document.getElementById('chartsModal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'chartsModal';
+                    modal.className = 'modal';
+                    modal.innerHTML = `
+                        <div class="modal-content" style="width: 700px; max-height: 80vh; overflow-y: auto;">
+                            <div class="modal-header">
+                                <h2>Property Charts</h2>
+                                <button class="modal-close" onclick="document.getElementById('chartsModal').classList.remove('visible')">&times;</button>
+                            </div>
+                            <div class="modal-body" id="chartsPanelContent" style="padding: 20px;"></div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                }
+                PropertyCharts.renderPanel('chartsPanelContent');
+                modal.classList.add('visible');
+            } else {
+                alert('Property Charts module is loading. Please try again.');
+            }
+        };
+
+        window.openAIContent = function() {
+            if (typeof AIContent !== 'undefined' && AIContent.showModal) {
+                AIContent.showModal();
+            } else {
+                alert('AI Content module is loading. Please try again.');
+            }
+        };
+
+        window.openPropertyGraphics = function() {
+            if (typeof PropertyGraphics !== 'undefined' && PropertyGraphics.showPanel) {
+                PropertyGraphics.showPanel();
+            } else {
+                alert('Property Graphics module is loading. Please try again.');
             }
         };
 
