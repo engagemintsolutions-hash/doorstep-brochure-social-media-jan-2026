@@ -131,7 +131,7 @@ class VisionClaudeClient:
 
     def _build_analysis_prompt(self) -> str:
         """Build the prompt for Claude to analyze the property image with JSON output."""
-        return """Analyze this property photograph and identify SPECIFIC PHYSICAL FEATURES visible in the image.
+        return """You are a professional UK estate agent writing copy for a property brochure. Analyze this photograph and create compelling marketing descriptions.
 
 You MUST respond with ONLY valid JSON in this exact format:
 {
@@ -142,26 +142,41 @@ You MUST respond with ONLY valid JSON in this exact format:
   "view_hint": "garden_view|street_view|park_view|null",
   "interior": true|false,
   "orientation_hint": "north_facing|south_facing|east_facing|west_facing|front_aspect|rear_aspect|null",
-  "caption": "8-20 word property caption describing what you see"
+  "caption": "Compelling 15-25 word estate agent description",
+  "headline": "Punchy 3-6 word headline for this space",
+  "selling_points": ["key selling point 1", "key selling point 2", "key selling point 3"]
 }
 
 VALID FEATURES (only list if ACTUALLY VISIBLE):
-- Structural: fireplace, bay_window, sash_windows, french_doors, bifold_doors, skylights, exposed_beams, conservatory
-- Outdoor: garden, driveway, garage, parking, patio, balcony, terrace, decking, swimming_pool
-- Kitchen: kitchen_island, breakfast_bar, range_cooker, integrated_appliances
-- Bedroom: ensuite, walk_in_wardrobe, fitted_wardrobes
+- Structural: fireplace, bay_window, sash_windows, french_doors, bifold_doors, skylights, exposed_beams, conservatory, vaulted_ceiling, double_height_ceiling
+- Outdoor: garden, driveway, garage, parking, patio, balcony, terrace, decking, swimming_pool, hot_tub, landscaped_gardens
+- Kitchen: kitchen_island, breakfast_bar, range_cooker, integrated_appliances, utility_room, pantry
+- Bedroom: ensuite, walk_in_wardrobe, fitted_wardrobes, dressing_room
+- Bathroom: freestanding_bath, walk_in_shower, double_vanity, heated_towel_rail
 
 VALID FINISHES (only list if ACTUALLY VISIBLE):
-- Floors: hardwood_floors, marble_flooring, porcelain_tiles, carpet
-- Surfaces: granite_countertops, quartz_worktops, wooden_worktops
-- Appliances: stainless_steel_appliances, integrated_appliances
-- Lighting: recessed_lighting, pendant_lighting, chandeliers
+- Floors: hardwood_floors, engineered_oak, marble_flooring, porcelain_tiles, natural_stone, underfloor_heating
+- Surfaces: granite_countertops, quartz_worktops, marble_worktops, solid_wood_worktops
+- Appliances: stainless_steel_appliances, integrated_appliances, wine_fridge, american_fridge_freezer
+- Lighting: recessed_lighting, pendant_lighting, chandeliers, feature_lighting, smart_lighting
+
+ESTATE AGENT WRITING STYLE:
+- Use aspirational language: "stunning", "exceptional", "beautifully appointed", "thoughtfully designed"
+- Highlight lifestyle benefits: "perfect for entertaining", "ideal for family living", "peaceful retreat"
+- Mention light and space: "flooded with natural light", "generous proportions", "seamless flow"
+- Reference quality: "high specification", "premium finishes", "attention to detail"
+- For exteriors: mention kerb appeal, outdoor entertaining, landscaping
+
+CAPTION EXAMPLES:
+- Kitchen: "Stunning chef's kitchen featuring a central island with breakfast bar, premium integrated appliances, and elegant pendant lighting throughout"
+- Bedroom: "Luxurious principal suite offering a serene retreat with bespoke fitted wardrobes, engineered oak flooring, and views over the landscaped gardens"
+- Exterior: "Impressive double-fronted family home with manicured gardens, sweeping driveway, and exceptional kerb appeal"
 
 CRITICAL RULES:
-1. Only list features/finishes you can ACTUALLY SEE - do not guess or assume
-2. If uncertain, leave arrays empty []
-3. NEVER use subjective terms like: well_presented, modern, attractive, stunning, beautiful, quality, excellent
-4. Caption must describe VISIBLE elements only
+1. Only reference features you can ACTUALLY SEE - do not invent rooms or features
+2. Make descriptions compelling but truthful to what's visible
+3. Headlines should be punchy and memorable
+4. Selling points should be specific to this image
 5. Respond with ONLY the JSON object, no other text"""
 
     def _parse_claude_response(self, response_text: str, filename: str) -> Dict:
@@ -179,7 +194,9 @@ CRITICAL RULES:
             "view_hint": None,
             "interior": True,
             "orientation_hint": None,
-            "suggested_caption": ""
+            "suggested_caption": "",
+            "headline": "",
+            "selling_points": []
         }
 
         try:
@@ -208,6 +225,10 @@ CRITICAL RULES:
                     result['orientation_hint'] = None if oh in [None, 'null', 'none'] else str(oh).lower()
                 if 'caption' in parsed:
                     result['suggested_caption'] = str(parsed['caption'])
+                if 'headline' in parsed:
+                    result['headline'] = str(parsed['headline'])
+                if 'selling_points' in parsed and isinstance(parsed['selling_points'], list):
+                    result['selling_points'] = [str(p).strip() for p in parsed['selling_points'] if p]
 
                 logger.debug(f"Successfully parsed JSON response for {filename}")
             else:
@@ -254,37 +275,34 @@ CRITICAL RULES:
 
     def _validate_analysis(self, analysis: Dict, filename: str) -> Dict:
         """
-        Validate the analysis to catch hallucinations and generic responses.
+        Validate the analysis to catch hallucinations and overly generic responses.
+        Now tuned for estate agent language - allows aspirational terms but catches
+        truly generic filler content.
         """
-        # List of generic/hallucinated terms that indicate poor analysis
-        HALLUCINATION_INDICATORS = [
-            "well_presented", "well presented", "modern_finish", "attractive",
-            "quality", "excellent", "beautiful", "stunning", "lovely",
-            "nice", "good condition", "immaculate", "pristine"
+        # Only flag truly generic/filler terms that indicate lazy output
+        # Estate agent terms like "stunning", "beautiful" are now allowed
+        GENERIC_FILLER_TERMS = [
+            "well_presented", "well presented", "modern_finish",
+            "good condition", "nice property", "attractive property",
+            "quality throughout", "well maintained"
         ]
 
-        # Check detected features for hallucinations
+        # Check detected features for generic filler (not real features)
         valid_features = []
         for feature in analysis.get('detected_features', []):
             feature_lower = feature.lower()
-            if not any(indicator in feature_lower for indicator in HALLUCINATION_INDICATORS):
+            # Only filter out if it's a generic filler, not a real feature
+            if not any(filler in feature_lower for filler in GENERIC_FILLER_TERMS):
                 valid_features.append(feature)
-
-        # If all features were hallucinated, flag for manual review
-        if not valid_features and analysis.get('detected_features'):
-            logger.warning(f"Possible hallucination detected for {filename} - features looked generic")
-            analysis['needs_review'] = True
-            analysis['detected_features'] = []
 
         analysis['detected_features'] = valid_features
 
-        # Validate caption isn't generic
-        caption = analysis.get('suggested_caption', '').lower()
-        if any(indicator in caption for indicator in HALLUCINATION_INDICATORS):
-            # Generate a more honest caption based on room type
+        # Only flag caption if it's extremely generic (just "Property" or similar)
+        caption = analysis.get('suggested_caption', '').strip()
+        if len(caption) < 20 or caption.lower() in ['property', 'house', 'home', 'room']:
             room_type = analysis.get('room_type', 'room')
-            analysis['suggested_caption'] = f"Property {room_type.replace('_', ' ')}"
             analysis['needs_review'] = True
+            logger.warning(f"Caption too short/generic for {filename}: '{caption}'")
 
         return analysis
 
