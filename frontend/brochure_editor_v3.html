@@ -604,6 +604,7 @@
             <div class="panel-tabs">
                 <button class="panel-tab" data-panel="layouts">Layouts</button>
                 <button class="panel-tab" data-panel="templates">Templates</button>
+                <button class="panel-tab" data-panel="colors">Colors</button>
                 <button class="panel-tab active" data-panel="elements">Elements</button>
                 <button class="panel-tab" data-panel="effects">Effects</button>
                 <button class="panel-tab" data-panel="layers">Layers</button>
@@ -620,6 +621,70 @@
             <div id="templatesPanel" class="tab-panel">
                 <div id="templatePickerContent">
                     <!-- Will be populated by template picker -->
+                </div>
+            </div>
+
+            <!-- Colors Panel - Global Color Scheme Switcher -->
+            <div id="colorsPanel" class="tab-panel">
+                <div class="colors-panel-content">
+                    <h4 style="margin: 0 0 12px 0; font-size: 13px; color: #333;">Color Schemes</h4>
+                    <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Click a scheme to apply to all pages</p>
+
+                    <!-- Preset Color Schemes Grid -->
+                    <div id="colorSchemesGrid" class="color-schemes-grid">
+                        <!-- Will be populated by JS -->
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+
+                    <!-- Custom Colors Section -->
+                    <h4 style="margin: 0 0 12px 0; font-size: 13px; color: #333;">Custom Colors</h4>
+                    <div class="custom-colors-section">
+                        <div class="color-row">
+                            <label>Primary</label>
+                            <div class="color-input-group">
+                                <input type="color" id="schemePrimary" value="#1a365d">
+                                <input type="text" id="schemePrimaryHex" value="#1a365d" maxlength="7">
+                            </div>
+                        </div>
+                        <div class="color-row">
+                            <label>Secondary</label>
+                            <div class="color-input-group">
+                                <input type="color" id="schemeSecondary" value="#c9a961">
+                                <input type="text" id="schemeSecondaryHex" value="#c9a961" maxlength="7">
+                            </div>
+                        </div>
+                        <div class="color-row">
+                            <label>Accent</label>
+                            <div class="color-input-group">
+                                <input type="color" id="schemeAccent" value="#ed8936">
+                                <input type="text" id="schemeAccentHex" value="#ed8936" maxlength="7">
+                            </div>
+                        </div>
+                        <div class="color-row">
+                            <label>Background</label>
+                            <div class="color-input-group">
+                                <input type="color" id="schemeBackground" value="#ffffff">
+                                <input type="text" id="schemeBackgroundHex" value="#ffffff" maxlength="7">
+                            </div>
+                        </div>
+                        <div class="color-row">
+                            <label>Text</label>
+                            <div class="color-input-group">
+                                <input type="color" id="schemeText" value="#2d3748">
+                                <input type="text" id="schemeTextHex" value="#2d3748" maxlength="7">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-top: 15px;">
+                        <button onclick="applyCustomColorScheme()" class="action-btn primary" style="flex: 1; padding: 10px; font-size: 12px;">
+                            Apply to All Pages
+                        </button>
+                        <button onclick="applyCustomColorScheme(true)" class="action-btn secondary" style="flex: 1; padding: 10px; font-size: 12px;">
+                            Current Page Only
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -3417,6 +3482,7 @@
     <script src="property_graphics.js?v=20260116_GRAPHICS"></script>
     <script src="text_styles.js?v=20260116_TEXTSTYLES"></script>
     <script src="smart_guides.js?v=20260116_GUIDES"></script>
+    <script src="color_schemes.js?v=20260117_COLORS"></script>
 
     <!-- Initialize Phase 2 features -->
     <script>
@@ -3444,6 +3510,8 @@
                     }
                 } else if (panelId === 'templates' && typeof TemplatePicker !== 'undefined') {
                     TemplatePicker.render('templatePickerContent');
+                } else if (panelId === 'colors' && typeof ColorSchemes !== 'undefined') {
+                    ColorSchemes.render();
                 } else if (panelId === 'effects' && typeof VisualEffects !== 'undefined') {
                     VisualEffects.renderPanel('visualEffectsContent');
                 } else if (panelId === 'layers' && typeof LayerSystem !== 'undefined') {

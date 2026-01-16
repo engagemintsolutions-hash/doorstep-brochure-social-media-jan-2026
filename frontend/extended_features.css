@@ -1021,3 +1021,139 @@
     border-color: #2196F3;
     box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
+
+/* ============================================================================
+   COLOR SCHEMES PANEL
+   ============================================================================ */
+
+.colors-panel-content {
+    padding: 12px;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+}
+
+.color-schemes-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.scheme-category {
+    margin-bottom: 8px;
+}
+
+.schemes-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.scheme-swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid #e0e0e0;
+    transition: all 0.2s;
+}
+
+.scheme-swatch:hover {
+    transform: scale(1.1);
+    border-color: #999;
+}
+
+.scheme-swatch.active {
+    border-color: #0066ff;
+    box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.3);
+}
+
+/* Custom colors section */
+.custom-colors-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-row label {
+    flex: 0 0 80px;
+    font-size: 12px;
+    color: #444;
+    font-weight: 500;
+}
+
+.color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.color-input-group input[type="color"] {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+
+.color-input-group input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 2px;
+}
+
+.color-input-group input[type="color"]::-webkit-color-swatch {
+    border-radius: 4px;
+    border: none;
+}
+
+.color-input-group input[type="text"] {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: monospace;
+    text-transform: uppercase;
+}
+
+.color-input-group input[type="text"]:focus {
+    outline: none;
+    border-color: #0066ff;
+}
+
+/* Apply buttons */
+#colorsPanel .action-btn {
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#colorsPanel .action-btn.primary {
+    background: #0066ff;
+    color: white;
+    border: none;
+}
+
+#colorsPanel .action-btn.primary:hover {
+    background: #0052cc;
+}
+
+#colorsPanel .action-btn.secondary {
+    background: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+#colorsPanel .action-btn.secondary:hover {
+    background: #e0e0e0;
+}
