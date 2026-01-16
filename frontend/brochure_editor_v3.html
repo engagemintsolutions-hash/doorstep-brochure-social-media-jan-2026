@@ -151,6 +151,20 @@
         </button>
         <div class="toolbar-divider"></div>
 
+        <!-- Text Style Presets -->
+        <select class="format-select" id="textPresetSelect" title="Text Style Presets" style="max-width: 100px;" onchange="applyTextPreset(this.value)">
+            <option value="">Styles</option>
+            <option value="headline">Headline</option>
+            <option value="subheadline">Subheadline</option>
+            <option value="body">Body</option>
+            <option value="caption">Caption</option>
+            <option value="quote">Quote</option>
+            <option value="price">Price Tag</option>
+            <option value="cta">Call to Action</option>
+            <option value="elegant">Elegant</option>
+        </select>
+        <div class="toolbar-divider"></div>
+
         <!-- Text Color Picker -->
         <div class="color-picker-wrapper" title="Text Color">
             <button class="format-btn color-btn" id="textColorBtn">
@@ -361,7 +375,16 @@
                             <line x1="8" y1="11" x2="14" y2="11"/>
                         </svg>
                     </button>
-                    <span id="zoomLevel" class="zoom-label">65%</span>
+                    <select id="zoomLevelSelect" class="zoom-select" title="Zoom Level" onchange="setZoomFromDropdown(this.value)">
+                        <option value="0.25">25%</option>
+                        <option value="0.50">50%</option>
+                        <option value="0.65" selected>65%</option>
+                        <option value="0.75">75%</option>
+                        <option value="1.00">100%</option>
+                        <option value="1.25">125%</option>
+                        <option value="1.50">150%</option>
+                        <option value="2.00">200%</option>
+                    </select>
                     <button id="zoomInBtn" class="tool-btn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="11" cy="11" r="8"/>
@@ -375,7 +398,11 @@
                 <div class="view-mode">
                     <label>
                         <input type="checkbox" id="showGuidesToggle">
-                        Show Guides
+                        Guides
+                    </label>
+                    <label>
+                        <input type="checkbox" id="showGridToggle" onchange="toggleCanvasGrid(this.checked)">
+                        Grid
                     </label>
                 </div>
                 <div class="quick-tools">
@@ -1042,6 +1069,75 @@
         });
 
         // ====================================================================
+        // RECENT COLORS SYSTEM
+        // ====================================================================
+        window.RecentColors = (function() {
+            const MAX_RECENT = 12;
+            const STORAGE_KEY = 'brochureEditor_recentColors';
+
+            let recentColors = [];
+
+            // Load from localStorage
+            function load() {
+                try {
+                    const stored = localStorage.getItem(STORAGE_KEY);
+                    if (stored) {
+                        recentColors = JSON.parse(stored);
+                    }
+                } catch (e) {
+                    recentColors = [];
+                }
+                return recentColors;
+            }
+
+            // Save to localStorage
+            function save() {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(recentColors));
+                } catch (e) {
+                    console.warn('Could not save recent colors');
+                }
+            }
+
+            // Add a color to recent
+            function add(color) {
+                if (!color || color === 'transparent') return;
+
+                // Normalize color to uppercase hex
+                color = color.toUpperCase();
+                if (!color.startsWith('#')) {
+                    color = '#' + color;
+                }
+
+                // Remove if already exists
+                const index = recentColors.indexOf(color);
+                if (index > -1) {
+                    recentColors.splice(index, 1);
+                }
+
+                // Add to front
+                recentColors.unshift(color);
+
+                // Limit to max
+                if (recentColors.length > MAX_RECENT) {
+                    recentColors = recentColors.slice(0, MAX_RECENT);
+                }
+
+                save();
+            }
+
+            // Get recent colors
+            function get() {
+                return [...recentColors];
+            }
+
+            // Initialize
+            load();
+
+            return { add, get, load };
+        })();
+
+        // ====================================================================
         // TEXT COLOR PICKER
         // ====================================================================
         const textColorBtn = document.getElementById('textColorBtn');
@@ -1059,17 +1155,77 @@
             '#D946EF', '#EC4899', '#F43F5E', '#78350F', '#1E3A8A', '#064E3B'
         ];
 
+        // Update recent colors display in existing dropdown
+        function updateRecentColorsDisplay(dropdown) {
+            if (!window.RecentColors) return;
+
+            const recentColors = window.RecentColors.get();
+            let recentSection = dropdown.querySelector('.recent-colors-grid');
+            let recentLabel = dropdown.querySelector('.color-section-label');
+
+            if (recentColors.length > 0) {
+                if (!recentSection) {
+                    // Create recent section if it doesn't exist
+                    const allColorsLabel = document.createElement('div');
+                    allColorsLabel.className = 'color-section-label';
+                    allColorsLabel.textContent = 'All Colors';
+
+                    recentLabel = document.createElement('div');
+                    recentLabel.className = 'color-section-label';
+                    recentLabel.textContent = 'Recent';
+
+                    recentSection = document.createElement('div');
+                    recentSection.className = 'recent-colors-grid';
+
+                    const swatchesGrid = dropdown.querySelector('.color-swatches-grid');
+                    swatchesGrid.parentNode.insertBefore(recentLabel, swatchesGrid);
+                    swatchesGrid.parentNode.insertBefore(recentSection, swatchesGrid);
+                    swatchesGrid.parentNode.insertBefore(allColorsLabel, swatchesGrid);
+                }
+
+                // Update the recent colors
+                recentSection.innerHTML = recentColors.map(color => `
+                    <div class="color-swatch recent-color" data-color="${color}" style="background: ${color};"></div>
+                `).join('');
+
+                // Re-attach click handlers
+                recentSection.querySelectorAll('.color-swatch').forEach(swatch => {
+                    swatch.addEventListener('click', () => {
+                        const color = swatch.dataset.color;
+                        // Trigger the same color select callback
+                        dropdown.dispatchEvent(new CustomEvent('colorSelect', { detail: color }));
+                        dropdown.classList.remove('visible');
+                    });
+                });
+            }
+        }
+
         // Create color swatches dropdown
         function createColorSwatches(targetBtn, onColorSelect, showClear = false) {
             const existing = targetBtn.parentElement.querySelector('.color-swatches');
             if (existing) {
                 existing.classList.toggle('visible');
+                // Refresh recent colors if visible
+                if (existing.classList.contains('visible')) {
+                    updateRecentColorsDisplay(existing);
+                }
                 return;
             }
+
+            const recentColors = window.RecentColors ? window.RecentColors.get() : [];
 
             const dropdown = document.createElement('div');
             dropdown.className = 'color-swatches visible';
             dropdown.innerHTML = `
+                ${recentColors.length > 0 ? `
+                    <div class="color-section-label">Recent</div>
+                    <div class="recent-colors-grid">
+                        ${recentColors.map(color => `
+                            <div class="color-swatch recent-color" data-color="${color}" style="background: ${color};"></div>
+                        `).join('')}
+                    </div>
+                    <div class="color-section-label">All Colors</div>
+                ` : ''}
                 <div class="color-swatches-grid">
                     ${colorPresets.map(color => `
                         <div class="color-swatch" data-color="${color}" style="background: ${color};"></div>
@@ -1083,12 +1239,44 @@
                 ${showClear ? '<button class="color-clear-btn">Remove Highlight</button>' : ''}
             `;
 
+            // Add styles for recent colors section
+            if (!document.getElementById('recent-colors-styles')) {
+                const styles = document.createElement('style');
+                styles.id = 'recent-colors-styles';
+                styles.textContent = `
+                    .color-section-label {
+                        font-size: 10px;
+                        color: #888;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        margin: 8px 0 4px;
+                        padding: 0 4px;
+                    }
+                    .recent-colors-grid {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 4px;
+                        margin-bottom: 8px;
+                    }
+                    .recent-colors-grid .color-swatch {
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 3px;
+                    }
+                `;
+                document.head.appendChild(styles);
+            }
+
             targetBtn.parentElement.appendChild(dropdown);
 
             // Handle swatch clicks
             dropdown.querySelectorAll('.color-swatch').forEach(swatch => {
                 swatch.addEventListener('click', () => {
                     const color = swatch.dataset.color;
+                    // Add to recent colors
+                    if (window.RecentColors) {
+                        window.RecentColors.add(color);
+                    }
                     onColorSelect(color);
                     dropdown.classList.remove('visible');
                 });
@@ -1100,6 +1288,10 @@
 
             customColorInput.addEventListener('input', (e) => {
                 customTextInput.value = e.target.value;
+                // Add to recent colors
+                if (window.RecentColors) {
+                    window.RecentColors.add(e.target.value);
+                }
                 onColorSelect(e.target.value);
             });
 
@@ -1108,6 +1300,10 @@
                 if (!val.startsWith('#')) val = '#' + val;
                 if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
                     customColorInput.value = val;
+                    // Add to recent colors
+                    if (window.RecentColors) {
+                        window.RecentColors.add(val);
+                    }
                     onColorSelect(val);
                 }
             });
@@ -1207,6 +1403,116 @@
                 }
             } else {
                 alert('Please select a text element first.');
+            }
+        };
+
+        // Text Style Presets
+        window.applyTextPreset = function(preset) {
+            if (!activeTextElement) {
+                alert('Please select a text element first.');
+                document.getElementById('textPresetSelect').value = '';
+                return;
+            }
+
+            const presets = {
+                headline: {
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    fontFamily: "'Playfair Display', serif",
+                    lineHeight: '1.2',
+                    letterSpacing: '0px',
+                    color: '#1a1a1a'
+                },
+                subheadline: {
+                    fontSize: '24px',
+                    fontWeight: '600',
+                    fontFamily: "'Montserrat', sans-serif",
+                    lineHeight: '1.3',
+                    letterSpacing: '0.5px',
+                    color: '#333333'
+                },
+                body: {
+                    fontSize: '16px',
+                    fontWeight: 'normal',
+                    fontFamily: "'Open Sans', sans-serif",
+                    lineHeight: '1.6',
+                    letterSpacing: '0px',
+                    color: '#4a4a4a'
+                },
+                caption: {
+                    fontSize: '12px',
+                    fontWeight: 'normal',
+                    fontFamily: "'Inter', sans-serif",
+                    lineHeight: '1.4',
+                    letterSpacing: '0.2px',
+                    color: '#666666'
+                },
+                quote: {
+                    fontSize: '20px',
+                    fontWeight: 'normal',
+                    fontStyle: 'italic',
+                    fontFamily: "'Lora', serif",
+                    lineHeight: '1.5',
+                    letterSpacing: '0px',
+                    color: '#555555'
+                },
+                price: {
+                    fontSize: '32px',
+                    fontWeight: 'bold',
+                    fontFamily: "'Oswald', sans-serif",
+                    lineHeight: '1.1',
+                    letterSpacing: '1px',
+                    color: '#FF9800'
+                },
+                cta: {
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    fontFamily: "'Poppins', sans-serif",
+                    lineHeight: '1.2',
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                    color: '#2196F3'
+                },
+                elegant: {
+                    fontSize: '28px',
+                    fontWeight: '300',
+                    fontFamily: "'Cormorant Garamond', serif",
+                    lineHeight: '1.4',
+                    letterSpacing: '2px',
+                    color: '#2c3e50'
+                }
+            };
+
+            const style = presets[preset];
+            if (!style) {
+                document.getElementById('textPresetSelect').value = '';
+                return;
+            }
+
+            // Apply all styles
+            Object.keys(style).forEach(prop => {
+                activeTextElement.style[prop] = style[prop];
+            });
+
+            // Update toolbar controls to reflect changes
+            const fontSizeSelect = document.getElementById('fontSizeSelect');
+            const fontFamilySelect = document.getElementById('fontFamilySelect');
+            if (fontSizeSelect) {
+                fontSizeSelect.value = style.fontSize;
+            }
+            if (fontFamilySelect) {
+                fontFamilySelect.value = style.fontFamily;
+            }
+
+            // Reset dropdown after applying
+            setTimeout(() => {
+                document.getElementById('textPresetSelect').value = '';
+            }, 100);
+
+            showToast(`"${preset}" style applied`, 'success');
+
+            if (typeof saveToHistory === 'function') {
+                saveToHistory(`apply ${preset} preset`);
             }
         };
 
@@ -1526,6 +1832,119 @@
             }
         };
 
+        // Canvas Grid Toggle
+        window.toggleCanvasGrid = function(show) {
+            const canvas = document.getElementById('brochure-canvas');
+            if (!canvas) return;
+
+            let gridOverlay = document.getElementById('canvasGridOverlay');
+
+            if (show) {
+                if (!gridOverlay) {
+                    gridOverlay = document.createElement('div');
+                    gridOverlay.id = 'canvasGridOverlay';
+                    gridOverlay.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        pointer-events: none;
+                        z-index: 9998;
+                        background-image:
+                            linear-gradient(to right, rgba(200, 200, 200, 0.3) 1px, transparent 1px),
+                            linear-gradient(to bottom, rgba(200, 200, 200, 0.3) 1px, transparent 1px);
+                        background-size: 20px 20px;
+                    `;
+                    canvas.style.position = 'relative';
+                    canvas.appendChild(gridOverlay);
+                }
+                gridOverlay.style.display = 'block';
+            } else {
+                if (gridOverlay) {
+                    gridOverlay.style.display = 'none';
+                }
+            }
+        };
+
+        // Zoom from dropdown
+        window.setZoomFromDropdown = function(value) {
+            const zoomLevel = parseFloat(value);
+            if (isNaN(zoomLevel)) return;
+
+            if (typeof setZoom === 'function') {
+                setZoom(zoomLevel);
+            } else {
+                // Fallback if setZoom not available
+                if (typeof EditorState !== 'undefined') {
+                    EditorState.zoomLevel = zoomLevel;
+                }
+                const canvas = document.getElementById('brochure-canvas');
+                if (canvas) {
+                    canvas.style.transform = `scale(${zoomLevel})`;
+                    canvas.style.transformOrigin = 'center top';
+                }
+            }
+        };
+
+        // Update dropdown when zoom changes (integrate with existing setZoom)
+        (function() {
+            const originalSetZoom = window.setZoom;
+            if (originalSetZoom) {
+                window.setZoom = function(level) {
+                    originalSetZoom(level);
+                    updateZoomDropdown(level);
+                };
+            }
+
+            // Also patch via interval to catch initialization
+            setTimeout(() => {
+                if (typeof setZoom === 'function' && !window._zoomPatched) {
+                    window._zoomPatched = true;
+                    const origFn = window.setZoom;
+                    window.setZoom = function(level) {
+                        origFn(level);
+                        updateZoomDropdown(level);
+                    };
+                }
+            }, 2000);
+        })();
+
+        function updateZoomDropdown(level) {
+            const dropdown = document.getElementById('zoomLevelSelect');
+            if (!dropdown) return;
+
+            // Find closest option
+            const options = Array.from(dropdown.options);
+            let closest = options[0];
+            let closestDiff = Math.abs(parseFloat(options[0].value) - level);
+
+            options.forEach(opt => {
+                const diff = Math.abs(parseFloat(opt.value) - level);
+                if (diff < closestDiff) {
+                    closest = opt;
+                    closestDiff = diff;
+                }
+            });
+
+            // If exact match within 1%, select it
+            if (closestDiff < 0.01) {
+                dropdown.value = closest.value;
+            } else {
+                // Show actual percentage as custom
+                // Check if we already have a custom option
+                let customOpt = dropdown.querySelector('option[data-custom="true"]');
+                if (!customOpt) {
+                    customOpt = document.createElement('option');
+                    customOpt.dataset.custom = 'true';
+                    dropdown.appendChild(customOpt);
+                }
+                customOpt.value = level;
+                customOpt.textContent = Math.round(level * 100) + '%';
+                dropdown.value = level;
+            }
+        }
+
         // Track selected image element for image tools
         window.selectedImageElement = null;
 
@@ -1700,8 +2119,411 @@
             });
         });
 
+        // Global Loading Spinner System
+        window.LoadingSpinner = (function() {
+            let overlay = null;
+            let spinnerCount = 0;
+
+            function createOverlay() {
+                if (overlay) return overlay;
+
+                overlay = document.createElement('div');
+                overlay.id = 'loadingOverlay';
+                overlay.innerHTML = `
+                    <div class="loading-content">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">Loading...</div>
+                        <div class="loading-progress" style="display: none;">
+                            <div class="progress-bar"><div class="progress-fill"></div></div>
+                            <span class="progress-text">0%</span>
+                        </div>
+                    </div>
+                `;
+
+                const styles = document.createElement('style');
+                styles.id = 'loading-spinner-styles';
+                styles.textContent = `
+                    #loadingOverlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.6);
+                        backdrop-filter: blur(4px);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 99999;
+                        opacity: 0;
+                        transition: opacity 0.2s ease;
+                    }
+                    #loadingOverlay.visible {
+                        opacity: 1;
+                    }
+                    .loading-content {
+                        text-align: center;
+                        color: white;
+                    }
+                    .loading-spinner {
+                        width: 50px;
+                        height: 50px;
+                        border: 4px solid rgba(255, 255, 255, 0.3);
+                        border-top-color: #FF9800;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 16px;
+                    }
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                    .loading-text {
+                        font-size: 16px;
+                        font-weight: 500;
+                        margin-bottom: 12px;
+                    }
+                    .loading-progress {
+                        margin-top: 12px;
+                    }
+                    .progress-bar {
+                        width: 200px;
+                        height: 6px;
+                        background: rgba(255, 255, 255, 0.3);
+                        border-radius: 3px;
+                        overflow: hidden;
+                        margin: 0 auto 8px;
+                    }
+                    .progress-fill {
+                        height: 100%;
+                        background: #FF9800;
+                        width: 0%;
+                        transition: width 0.3s ease;
+                    }
+                    .progress-text {
+                        font-size: 12px;
+                        color: rgba(255, 255, 255, 0.8);
+                    }
+                `;
+
+                if (!document.getElementById('loading-spinner-styles')) {
+                    document.head.appendChild(styles);
+                }
+                document.body.appendChild(overlay);
+                return overlay;
+            }
+
+            function show(message = 'Loading...', showProgress = false) {
+                spinnerCount++;
+                const el = createOverlay();
+                el.querySelector('.loading-text').textContent = message;
+                el.querySelector('.loading-progress').style.display = showProgress ? 'block' : 'none';
+                el.style.display = 'flex';
+                setTimeout(() => el.classList.add('visible'), 10);
+                return { id: spinnerCount };
+            }
+
+            function hide() {
+                spinnerCount = Math.max(0, spinnerCount - 1);
+                if (spinnerCount === 0 && overlay) {
+                    overlay.classList.remove('visible');
+                    setTimeout(() => {
+                        if (overlay && spinnerCount === 0) {
+                            overlay.style.display = 'none';
+                        }
+                    }, 200);
+                }
+            }
+
+            function setProgress(percent, text = null) {
+                if (!overlay) return;
+                const fill = overlay.querySelector('.progress-fill');
+                const textEl = overlay.querySelector('.progress-text');
+                if (fill) fill.style.width = percent + '%';
+                if (textEl) textEl.textContent = text || (percent + '%');
+            }
+
+            function setText(message) {
+                if (!overlay) return;
+                const textEl = overlay.querySelector('.loading-text');
+                if (textEl) textEl.textContent = message;
+            }
+
+            // Force hide all
+            function forceHide() {
+                spinnerCount = 0;
+                if (overlay) {
+                    overlay.classList.remove('visible');
+                    overlay.style.display = 'none';
+                }
+            }
+
+            return {
+                show,
+                hide,
+                setProgress,
+                setText,
+                forceHide
+            };
+        })();
+
+        // Image Drag-Drop with Visual Feedback
+        function setupImageDragDrop() {
+            const uploadArea = document.getElementById('imageUploadArea');
+            const uploadInput = document.getElementById('imageUploadInput');
+            const canvas = document.getElementById('brochure-canvas');
+
+            if (!uploadArea || !uploadInput) return;
+
+            // Add drag-drop styles dynamically
+            const dragDropStyles = document.createElement('style');
+            dragDropStyles.textContent = `
+                .upload-area.drag-over {
+                    background: rgba(255, 152, 0, 0.2) !important;
+                    border: 2px dashed #FF9800 !important;
+                    transform: scale(1.02);
+                    transition: all 0.2s ease;
+                }
+                .upload-area.drag-over .upload-prompt {
+                    background: rgba(255, 152, 0, 0.3);
+                    border-radius: 8px;
+                }
+                .canvas-area.drag-over::before {
+                    content: 'Drop image here';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(255, 152, 0, 0.9);
+                    color: white;
+                    padding: 20px 40px;
+                    border-radius: 12px;
+                    font-size: 18px;
+                    font-weight: 600;
+                    z-index: 10000;
+                    pointer-events: none;
+                }
+                .canvas-area.drag-over {
+                    position: relative;
+                }
+                .canvas-area.drag-over::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(255, 152, 0, 0.1);
+                    border: 3px dashed #FF9800;
+                    z-index: 9999;
+                    pointer-events: none;
+                }
+                .photo-uploading {
+                    opacity: 0.5;
+                    animation: pulse 1s infinite;
+                }
+                @keyframes pulse {
+                    0%, 100% { opacity: 0.5; }
+                    50% { opacity: 0.8; }
+                }
+            `;
+            document.head.appendChild(dragDropStyles);
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            // Highlight drop area when item is dragged over
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => {
+                    uploadArea.classList.add('drag-over');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => {
+                    uploadArea.classList.remove('drag-over');
+                }, false);
+            });
+
+            // Handle dropped files on upload area
+            uploadArea.addEventListener('drop', handleDrop, false);
+
+            // Handle file input change
+            uploadInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            // Also allow dropping on canvas
+            if (canvas) {
+                const canvasArea = canvas.closest('.canvas-area');
+                if (canvasArea) {
+                    ['dragenter', 'dragover'].forEach(eventName => {
+                        canvasArea.addEventListener(eventName, (e) => {
+                            if (e.dataTransfer.types.includes('Files')) {
+                                canvasArea.classList.add('drag-over');
+                            }
+                        }, false);
+                    });
+
+                    ['dragleave', 'drop'].forEach(eventName => {
+                        canvasArea.addEventListener(eventName, () => {
+                            canvasArea.classList.remove('drag-over');
+                        }, false);
+                    });
+
+                    canvasArea.addEventListener('drop', (e) => {
+                        if (e.dataTransfer.files.length > 0) {
+                            handleDrop(e);
+                        }
+                    }, false);
+                }
+            }
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+
+            function handleFiles(files) {
+                const imageFiles = [...files].filter(file => file.type.startsWith('image/'));
+
+                if (imageFiles.length === 0) {
+                    showNotification('Please drop image files only', 'warning');
+                    return;
+                }
+
+                imageFiles.forEach((file, index) => {
+                    const reader = new FileReader();
+
+                    reader.onloadstart = () => {
+                        showNotification(`Uploading ${file.name}...`, 'info');
+                    };
+
+                    reader.onload = (e) => {
+                        const dataUrl = e.target.result;
+                        addPhotoToGallery(dataUrl, file.name);
+                        showNotification(`${file.name} uploaded successfully!`, 'success');
+                    };
+
+                    reader.onerror = () => {
+                        showNotification(`Failed to upload ${file.name}`, 'error');
+                    };
+
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            function addPhotoToGallery(dataUrl, fileName) {
+                const galleryList = document.getElementById('photoGalleryList');
+                const photoCountEl = document.getElementById('photoCount');
+
+                if (!galleryList) return;
+
+                const photoId = 'uploaded-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+                // Store in EditorState
+                if (typeof EditorState !== 'undefined') {
+                    EditorState.photoUrls = EditorState.photoUrls || {};
+                    EditorState.photoUrls[photoId] = dataUrl;
+                }
+
+                // Create gallery item
+                const photoItem = document.createElement('div');
+                photoItem.className = 'gallery-photo-item';
+                photoItem.dataset.photoId = photoId;
+                photoItem.draggable = true;
+
+                photoItem.innerHTML = `
+                    <img src="${dataUrl}" alt="${fileName}">
+                    <div class="photo-label">${fileName}</div>
+                `;
+
+                // Allow dragging to canvas
+                photoItem.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', photoId);
+                    e.dataTransfer.setData('application/x-photo-url', dataUrl);
+                    photoItem.classList.add('dragging');
+                });
+
+                photoItem.addEventListener('dragend', () => {
+                    photoItem.classList.remove('dragging');
+                });
+
+                // Click to select
+                photoItem.addEventListener('click', () => {
+                    document.querySelectorAll('.gallery-photo-item').forEach(item => {
+                        item.classList.remove('selected');
+                    });
+                    photoItem.classList.add('selected');
+                    window.selectedPhotoUrl = dataUrl;
+                    window.selectedPhotoId = photoId;
+                });
+
+                galleryList.appendChild(photoItem);
+
+                // Update count
+                if (photoCountEl) {
+                    const count = galleryList.querySelectorAll('.gallery-photo-item').length;
+                    photoCountEl.textContent = `${count} photo${count !== 1 ? 's' : ''}`;
+                }
+            }
+
+            function showNotification(message, type) {
+                // Create notification if doesn't exist
+                let notification = document.getElementById('uploadNotification');
+                if (!notification) {
+                    notification = document.createElement('div');
+                    notification.id = 'uploadNotification';
+                    notification.style.cssText = `
+                        position: fixed;
+                        bottom: 20px;
+                        right: 20px;
+                        padding: 12px 20px;
+                        border-radius: 8px;
+                        color: white;
+                        font-weight: 500;
+                        z-index: 10001;
+                        transition: opacity 0.3s ease, transform 0.3s ease;
+                        transform: translateY(100px);
+                        opacity: 0;
+                    `;
+                    document.body.appendChild(notification);
+                }
+
+                const colors = {
+                    success: '#4CAF50',
+                    error: '#f44336',
+                    warning: '#FF9800',
+                    info: '#2196F3'
+                };
+
+                notification.style.background = colors[type] || colors.info;
+                notification.textContent = message;
+                notification.style.transform = 'translateY(0)';
+                notification.style.opacity = '1';
+
+                setTimeout(() => {
+                    notification.style.transform = 'translateY(100px)';
+                    notification.style.opacity = '0';
+                }, 3000);
+            }
+
+            console.log('[ImageDragDrop] Setup complete with visual feedback');
+        }
+
         // Initialize Phase 2 features when editor is ready
         document.addEventListener('DOMContentLoaded', () => {
+            // Setup image drag-drop with visual feedback
+            setupImageDragDrop();
+
             setTimeout(() => {
                 // Render alignment toolbar
                 if (typeof AlignmentSystem !== 'undefined') {
