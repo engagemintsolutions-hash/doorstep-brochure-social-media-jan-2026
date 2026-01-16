@@ -3030,93 +3030,71 @@
                 modal.innerHTML = `
                     <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px 12px 0 0;">
-                            <h3 style="margin: 0;">Repurpose to Social Media</h3>
+                            <h3 style="margin: 0;">AI Social Media Generator</h3>
                             <button class="modal-close" onclick="document.getElementById('socialMediaModal').classList.remove('visible')" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer;">&times;</button>
                         </div>
                         <div class="modal-body" style="padding: 20px;">
                             <!-- Platform Selection -->
                             <div style="margin-bottom: 20px;">
-                                <h4 style="margin-bottom: 10px;">Select Platforms</h4>
+                                <h4 style="margin-bottom: 10px;">Select Platform</h4>
                                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                                    <label style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
-                                        <input type="checkbox" id="platformInstagram" checked>
+                                    <label style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; border: 2px solid #667eea; border-radius: 8px; cursor: pointer; background: #f0f0ff;" class="platform-option" data-platform="instagram">
+                                        <input type="radio" name="socialPlatform" value="instagram" checked>
                                         <span style="font-size: 20px;">📸</span> Instagram
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
-                                        <input type="checkbox" id="platformFacebook" checked>
+                                    <label style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;" class="platform-option" data-platform="facebook">
+                                        <input type="radio" name="socialPlatform" value="facebook">
                                         <span style="font-size: 20px;">📘</span> Facebook
                                     </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
-                                        <input type="checkbox" id="platformLinkedIn">
-                                        <span style="font-size: 20px;">💼</span> LinkedIn
-                                    </label>
-                                    <label style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;">
-                                        <input type="checkbox" id="platformTwitter">
+                                    <label style="display: flex; align-items: center; gap: 8px; padding: 12px 20px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer;" class="platform-option" data-platform="twitter">
+                                        <input type="radio" name="socialPlatform" value="twitter">
                                         <span style="font-size: 20px;">🐦</span> X/Twitter
                                     </label>
                                 </div>
                             </div>
 
-                            <!-- Content Type -->
-                            <div style="margin-bottom: 20px;">
-                                <h4 style="margin-bottom: 10px;">Content Type</h4>
-                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-                                    <button onclick="selectContentType('carousel')" class="content-type-btn active" style="padding: 15px; border: 2px solid #667eea; border-radius: 8px; background: #f0f0ff; cursor: pointer;">
-                                        <div style="font-size: 24px; margin-bottom: 5px;">🖼️</div>
-                                        <div style="font-weight: 600;">Carousel Post</div>
-                                        <small style="color: #666;">Multiple images</small>
-                                    </button>
-                                    <button onclick="selectContentType('single')" class="content-type-btn" style="padding: 15px; border: 2px solid #ddd; border-radius: 8px; background: white; cursor: pointer;">
-                                        <div style="font-size: 24px; margin-bottom: 5px;">📷</div>
-                                        <div style="font-weight: 600;">Single Image</div>
-                                        <small style="color: #666;">Hero shot</small>
-                                    </button>
-                                    <button onclick="selectContentType('story')" class="content-type-btn" style="padding: 15px; border: 2px solid #ddd; border-radius: 8px; background: white; cursor: pointer;">
-                                        <div style="font-size: 24px; margin-bottom: 5px;">📱</div>
-                                        <div style="font-weight: 600;">Story/Reel</div>
-                                        <small style="color: #666;">Vertical format</small>
-                                    </button>
-                                </div>
+                            <!-- Generate Button -->
+                            <div style="margin-bottom: 20px; text-align: center;">
+                                <button id="generateSocialBtn" onclick="generateSocialContent()" style="padding: 15px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                                    ✨ Generate AI Content
+                                </button>
+                                <p style="margin-top: 8px; color: #666; font-size: 13px;">Uses Claude AI to create optimized captions and hashtags</p>
                             </div>
 
-                            <!-- Generated Captions -->
-                            <div style="margin-bottom: 20px;">
-                                <h4 style="margin-bottom: 10px;">Caption Variants</h4>
-                                <div style="display: grid; gap: 15px;">
-                                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px;">
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                            <span style="font-weight: 600;">Short (Engagement)</span>
-                                            <button onclick="copyCaption('short')" style="padding: 5px 10px; border: 1px solid #667eea; border-radius: 4px; background: white; color: #667eea; cursor: pointer;">Copy</button>
-                                        </div>
-                                        <textarea id="captionShort" style="width: 100%; min-height: 60px; border: 1px solid #eee; border-radius: 4px; padding: 10px; resize: vertical;">✨ New Listing Alert! Beautiful family home now available. DM for details or link in bio 🏡</textarea>
-                                    </div>
-                                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px;">
-                                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                            <span style="font-weight: 600;">Medium (Informative)</span>
-                                            <button onclick="copyCaption('medium')" style="padding: 5px 10px; border: 1px solid #667eea; border-radius: 4px; background: white; color: #667eea; cursor: pointer;">Copy</button>
-                                        </div>
-                                        <textarea id="captionMedium" style="width: 100%; min-height: 80px; border: 1px solid #eee; border-radius: 4px; padding: 10px; resize: vertical;">🏠 Just Listed! This stunning property features modern living spaces, a beautiful garden, and is perfectly located near excellent schools and transport links.
-
-📍 Contact us today to arrange a viewing!
-💬 DM for more details</textarea>
-                                    </div>
-                                </div>
+                            <!-- Loading State -->
+                            <div id="socialLoadingState" style="display: none; text-align: center; padding: 40px;">
+                                <div style="width: 50px; height: 50px; border: 4px solid #f0f0f0; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+                                <p style="color: #666;">Generating AI-powered content...</p>
                             </div>
 
-                            <!-- Hashtags -->
-                            <div style="margin-bottom: 20px;">
-                                <h4 style="margin-bottom: 10px;">Recommended Hashtags</h4>
-                                <div id="hashtagsContainer" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                    <span class="hashtag-chip" style="padding: 6px 12px; background: #f0f0f0; border-radius: 20px; cursor: pointer;" onclick="copyHashtag(this)">#PropertyForSale</span>
-                                    <span class="hashtag-chip" style="padding: 6px 12px; background: #f0f0f0; border-radius: 20px; cursor: pointer;" onclick="copyHashtag(this)">#NewListing</span>
-                                    <span class="hashtag-chip" style="padding: 6px 12px; background: #f0f0f0; border-radius: 20px; cursor: pointer;" onclick="copyHashtag(this)">#FamilyHome</span>
-                                    <span class="hashtag-chip" style="padding: 6px 12px; background: #f0f0f0; border-radius: 20px; cursor: pointer;" onclick="copyHashtag(this)">#RealEstate</span>
-                                    <span class="hashtag-chip" style="padding: 6px 12px; background: #f0f0f0; border-radius: 20px; cursor: pointer;" onclick="copyHashtag(this)">#HomeForSale</span>
-                                    <span class="hashtag-chip" style="padding: 6px 12px; background: #f0f0f0; border-radius: 20px; cursor: pointer;" onclick="copyHashtag(this)">#DreamHome</span>
-                                    <span class="hashtag-chip" style="padding: 6px 12px; background: #f0f0f0; border-radius: 20px; cursor: pointer;" onclick="copyHashtag(this)">#PropertyUK</span>
-                                    <span class="hashtag-chip" style="padding: 6px 12px; background: #f0f0f0; border-radius: 20px; cursor: pointer;" onclick="copyHashtag(this)">#HouseHunting</span>
+                            <!-- Generated Content (hidden initially) -->
+                            <div id="socialGeneratedContent" style="display: none;">
+                                <!-- Generated Caption -->
+                                <div style="margin-bottom: 20px;">
+                                    <h4 style="margin-bottom: 10px;">Generated Caption</h4>
+                                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                            <span style="font-weight: 600;" id="captionPlatformLabel">Instagram Caption</span>
+                                            <button onclick="copyCaption('generated')" style="padding: 5px 10px; border: 1px solid #667eea; border-radius: 4px; background: white; color: #667eea; cursor: pointer;">Copy</button>
+                                        </div>
+                                        <textarea id="captionGenerated" style="width: 100%; min-height: 120px; border: 1px solid #eee; border-radius: 4px; padding: 10px; resize: vertical; font-family: inherit;"></textarea>
+                                    </div>
                                 </div>
-                                <button onclick="copyAllHashtags()" style="margin-top: 10px; padding: 8px 16px; border: 1px solid #667eea; border-radius: 4px; background: white; color: #667eea; cursor: pointer;">Copy All Hashtags</button>
+
+                                <!-- AI Generated Hashtags -->
+                                <div style="margin-bottom: 20px;">
+                                    <h4 style="margin-bottom: 10px;">AI-Generated Hashtags</h4>
+                                    <div id="hashtagsContainer" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                        <!-- Hashtags will be populated by AI -->
+                                    </div>
+                                    <button onclick="copyAllHashtags()" style="margin-top: 10px; padding: 8px 16px; border: 1px solid #667eea; border-radius: 4px; background: white; color: #667eea; cursor: pointer;">Copy All Hashtags</button>
+                                </div>
+
+                                <!-- Property Info Used -->
+                                <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                                    <h5 style="margin: 0 0 10px 0; color: #666;">Property Data Used:</h5>
+                                    <div id="propertyDataUsed" style="font-size: 13px; color: #888;"></div>
+                                </div>
                             </div>
 
                             <!-- Export Actions -->
@@ -3133,10 +3111,202 @@
                             </div>
                         </div>
                     </div>
+                    <style>
+                        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                    </style>
                 `;
                 document.body.appendChild(modal);
+
+                // Add platform selection listeners
+                modal.querySelectorAll('.platform-option').forEach(label => {
+                    label.addEventListener('click', function() {
+                        modal.querySelectorAll('.platform-option').forEach(l => {
+                            l.style.border = '2px solid #ddd';
+                            l.style.background = 'white';
+                        });
+                        this.style.border = '2px solid #667eea';
+                        this.style.background = '#f0f0ff';
+                    });
+                });
             }
             modal.classList.add('visible');
+        };
+
+        // Generate social content using real AI API
+        window.generateSocialContent = async function() {
+            const loadingState = document.getElementById('socialLoadingState');
+            const generatedContent = document.getElementById('socialGeneratedContent');
+            const generateBtn = document.getElementById('generateSocialBtn');
+
+            // Get selected platform
+            const platformRadio = document.querySelector('input[name="socialPlatform"]:checked');
+            const platform = platformRadio ? platformRadio.value : 'instagram';
+
+            // Get property data from EditorState
+            const property = EditorState.sessionData?.property || {};
+            const pages = EditorState.sessionData?.pages || [];
+
+            // Extract description from pages
+            let description = '';
+            const detailsPage = pages.find(p => p.type === 'details');
+            if (detailsPage && detailsPage.content) {
+                description = detailsPage.content.description || '';
+            }
+
+            // Extract features
+            let features = [];
+            if (detailsPage && detailsPage.content && detailsPage.content.features) {
+                features = detailsPage.content.features;
+            }
+
+            // Show loading
+            loadingState.style.display = 'block';
+            generatedContent.style.display = 'none';
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Generating...';
+
+            try {
+                // Build form data for the API
+                const formData = new URLSearchParams();
+                formData.append('property_name', property.address || 'Beautiful Property');
+                formData.append('address', property.address || 'Prime Location');
+                formData.append('platform', platform);
+                formData.append('price', property.price || '');
+                formData.append('bedrooms', property.bedrooms || '');
+                formData.append('bathrooms', property.bathrooms || '');
+                formData.append('property_type', property.propertyType || '');
+                formData.append('description', description);
+                if (features.length > 0) {
+                    formData.append('key_features', JSON.stringify(features));
+                }
+
+                // Call the real API
+                const response = await fetch('/marketing/social-post', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData.toString()
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('[SocialMedia] AI Response:', result);
+
+                // Update UI with generated content
+                const captionTextarea = document.getElementById('captionGenerated');
+                const captionLabel = document.getElementById('captionPlatformLabel');
+                const hashtagsContainer = document.getElementById('hashtagsContainer');
+                const propertyDataDiv = document.getElementById('propertyDataUsed');
+
+                // Set caption
+                captionLabel.textContent = `${platform.charAt(0).toUpperCase() + platform.slice(1)} Caption`;
+                captionTextarea.value = result.post_text || result.caption || 'Content generated successfully!';
+
+                // Set hashtags
+                const hashtags = result.hashtags || [];
+                hashtagsContainer.innerHTML = hashtags.map(tag =>
+                    `<span class="hashtag-chip" style="padding: 6px 12px; background: #f0f0f0; border-radius: 20px; cursor: pointer;" onclick="copyHashtag(this)">${tag.startsWith('#') ? tag : '#' + tag}</span>`
+                ).join('');
+
+                // Show property data used
+                propertyDataDiv.innerHTML = `
+                    <strong>Address:</strong> ${property.address || 'N/A'} |
+                    <strong>Price:</strong> ${property.price || 'N/A'} |
+                    <strong>Beds:</strong> ${property.bedrooms || 'N/A'} |
+                    <strong>Baths:</strong> ${property.bathrooms || 'N/A'} |
+                    <strong>Type:</strong> ${property.propertyType || 'N/A'}
+                `;
+
+                // Show generated content
+                loadingState.style.display = 'none';
+                generatedContent.style.display = 'block';
+
+                showToast('AI content generated successfully!');
+
+            } catch (error) {
+                console.error('[SocialMedia] Error:', error);
+                loadingState.style.display = 'none';
+
+                // Show fallback content with property data
+                generatedContent.style.display = 'block';
+                const captionTextarea = document.getElementById('captionGenerated');
+                const hashtagsContainer = document.getElementById('hashtagsContainer');
+                const propertyDataDiv = document.getElementById('propertyDataUsed');
+
+                // Generate fallback content based on property data
+                const fallbackCaption = generateFallbackCaption(property, platform);
+                captionTextarea.value = fallbackCaption;
+
+                // Generate dynamic hashtags based on property
+                const dynamicHashtags = generateDynamicHashtags(property);
+                hashtagsContainer.innerHTML = dynamicHashtags.map(tag =>
+                    `<span class="hashtag-chip" style="padding: 6px 12px; background: #f0f0f0; border-radius: 20px; cursor: pointer;" onclick="copyHashtag(this)">${tag}</span>`
+                ).join('');
+
+                propertyDataDiv.innerHTML = `<em>API unavailable - using template with your property data</em>`;
+                showToast('Using template content (API unavailable)', 'warning');
+            }
+
+            generateBtn.disabled = false;
+            generateBtn.textContent = '✨ Generate AI Content';
+        };
+
+        // Fallback caption generator
+        window.generateFallbackCaption = function(property, platform) {
+            const address = property.address || 'Prime Location';
+            const price = property.price ? `£${property.price}` : '';
+            const beds = property.bedrooms || '';
+            const baths = property.bathrooms || '';
+            const type = property.propertyType || 'Property';
+
+            if (platform === 'twitter') {
+                return `🏡 NEW: ${type} in ${address.split(',')[0]}${beds ? ` | ${beds} beds` : ''}${price ? ` | ${price}` : ''}\n\nDM for details or link in bio`;
+            } else if (platform === 'facebook') {
+                return `🏠 Just Listed!\n\n${type} at ${address}\n\n${beds ? `🛏️ ${beds} Bedrooms\n` : ''}${baths ? `🚿 ${baths} Bathrooms\n` : ''}${price ? `💰 ${price}\n` : ''}\nContact us today to arrange a viewing!\n\n📍 ${address}`;
+            } else {
+                // Instagram
+                return `✨ New Listing Alert!\n\n📍 ${address}\n\n${beds ? `🛏️ ${beds} Bedrooms\n` : ''}${baths ? `🚿 ${baths} Bathrooms\n` : ''}${price ? `💰 ${price}\n` : ''}\nDM for details or link in bio 🏡`;
+            }
+        };
+
+        // Dynamic hashtag generator based on property
+        window.generateDynamicHashtags = function(property) {
+            const hashtags = ['#NewListing', '#PropertyForSale', '#RealEstate'];
+
+            // Add location-based hashtags
+            const address = property.address || '';
+            const locationParts = address.split(',');
+            if (locationParts.length > 1) {
+                const area = locationParts[1].trim().replace(/\s+/g, '');
+                if (area && area.length > 2) {
+                    hashtags.push(`#${area}Property`);
+                    hashtags.push(`#${area}Homes`);
+                }
+            }
+
+            // Add property type hashtags
+            const type = (property.propertyType || '').toLowerCase();
+            if (type.includes('detached')) hashtags.push('#DetachedHouse');
+            if (type.includes('semi')) hashtags.push('#SemiDetached');
+            if (type.includes('flat') || type.includes('apartment')) hashtags.push('#ApartmentForSale');
+            if (type.includes('cottage')) hashtags.push('#CottageLife');
+            if (type.includes('bungalow')) hashtags.push('#Bungalow');
+
+            // Add bedroom count hashtags
+            const beds = property.bedrooms;
+            if (beds) {
+                if (beds >= 4) hashtags.push('#FamilyHome');
+                if (beds >= 5) hashtags.push('#LargeProperty');
+            }
+
+            // Add general UK property hashtags
+            hashtags.push('#PropertyUK', '#HomeForSale', '#DreamHome', '#HouseHunting');
+
+            return [...new Set(hashtags)].slice(0, 12); // Remove duplicates, max 12
         };
 
         // Social media helper functions
@@ -3150,11 +3320,16 @@
         };
 
         window.copyCaption = function(type) {
-            const textarea = document.getElementById('caption' + type.charAt(0).toUpperCase() + type.slice(1));
+            const textareaId = type === 'generated' ? 'captionGenerated' : ('caption' + type.charAt(0).toUpperCase() + type.slice(1));
+            const textarea = document.getElementById(textareaId);
             if (textarea) {
                 textarea.select();
-                document.execCommand('copy');
-                showToast('Caption copied to clipboard!');
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    showToast('Caption copied to clipboard!');
+                }).catch(() => {
+                    document.execCommand('copy');
+                    showToast('Caption copied to clipboard!');
+                });
             }
         };
 

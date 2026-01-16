@@ -44,7 +44,8 @@
       "Bash(where:*)",
       "Bash(done)",
       "WebFetch(domain:doorstep-brochure-social-media-jan-2026-production.up.railway.app)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(del \"C:\\\\BrochureAndSocialMedia\\\\temp_js_check.txt\" \"C:\\\\BrochureAndSocialMedia\\\\temp_css_check.txt\")"
     ]
   }
 }
