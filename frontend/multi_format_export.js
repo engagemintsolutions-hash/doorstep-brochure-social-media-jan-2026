@@ -967,5 +967,7 @@ function closeExportProgressModal() {
 // ============================================
 
 window.exportMultipleFormats = exportMultipleFormats;
+window.generateHTMLPreview = generateHTMLPreview;
+window.extractContentSections = extractContentSections;
 
 console.log('✅ Multi-Format Export module ready');
