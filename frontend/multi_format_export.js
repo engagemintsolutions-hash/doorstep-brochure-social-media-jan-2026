@@ -338,10 +338,12 @@ function generateHTMLPreview(pages) {
         textSecondary: '#6b7280'
     };
 
-    // Get property data
-    const propertyData = window.brochureData?.property || {};
+    // Get property data from EditorState (primary) or brochureData (fallback)
+    const sessionData = window.EditorState?.sessionData || {};
+    const propertyData = sessionData.property || window.brochureData?.property || {};
+
     const address = propertyData.address || 'Beautiful Property';
-    const price = propertyData.price || 'Price on Application';
+    const price = propertyData.askingPrice || propertyData.price || 'Price on Application';
     const location = propertyData.location || '';
     const bedrooms = propertyData.bedrooms || '';
     const bathrooms = propertyData.bathrooms || '';
@@ -349,9 +351,13 @@ function generateHTMLPreview(pages) {
     const sqft = propertyData.sqft || '';
     const epc = propertyData.epc || '';
     const tenure = propertyData.tenure || 'Freehold';
+    const keyFeatures = propertyData.keyFeatures || '';
 
-    // Get photos with base64 data
-    const photos = window.uploadedPhotos || window.UnifiedBrochureState?.photos || [];
+    // Get photos from EditorState (primary) or global (fallback)
+    const photos = sessionData.photos || window.uploadedPhotos || window.UnifiedBrochureState?.photos || [];
+
+    console.log('[generateHTMLPreview] Property:', propertyData);
+    console.log('[generateHTMLPreview] Photos:', photos.length);
 
     // Get content from pages
     const contentSections = extractContentSections(pages);
