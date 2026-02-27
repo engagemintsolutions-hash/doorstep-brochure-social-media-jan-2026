@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="description" content="Create professional property brochures with AI-powered descriptions. Upload photos, fill in details, and generate print-ready PDF brochures.">
     <title>Property Brochure Builder - Doorstep</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -222,7 +224,7 @@
 
         .form-hint {
             font-size: 0.75rem;
-            color: var(--text-muted);
+            color: #6b7280;
             margin-top: 0.25rem;
         }
 
@@ -262,57 +264,6 @@
         }
 
         /* Template Grid */
-        .template-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
-        }
-
-        .template-card {
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: white;
-        }
-
-        .template-card:hover {
-            border-color: #9ca3af;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .template-card.selected {
-            border-color: #4A1420;
-            background: #fef2f2;
-            box-shadow: 0 0 0 3px rgba(184, 35, 46, 0.1);
-        }
-
-        .template-preview {
-            height: 80px;
-            border-radius: 4px;
-            margin-bottom: 8px;
-            display: flex;
-            overflow: hidden;
-        }
-
-        .template-preview .color-bar {
-            flex: 1;
-        }
-
-        .template-name {
-            font-weight: 600;
-            font-size: 13px;
-            color: #1f2937;
-            margin-bottom: 2px;
-        }
-
-        .template-desc {
-            font-size: 11px;
-            color: #6b7280;
-        }
-
         /* Color Picker */
         .color-picker-wrapper {
             display: flex;
@@ -339,9 +290,6 @@
         @media (max-width: 640px) {
             .form-row {
                 grid-template-columns: 1fr;
-            }
-            .template-grid {
-                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -414,18 +362,18 @@
                 <div class="builder-card-body">
                     <div class="form-row single">
                         <div class="form-group">
-                            <label>Property Address <span class="required">*</span></label>
+                            <label for="address">Property Address <span class="required">*</span></label>
                             <input type="text" class="form-input" id="address" placeholder="e.g. 42 Oak Lane, Richmond, TW10 6QD" required>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Asking Price <span class="required">*</span></label>
+                            <label for="askingPrice">Asking Price <span class="required">*</span></label>
                             <input type="text" class="form-input" id="askingPrice" placeholder="e.g. 850,000" required>
                         </div>
                         <div class="form-group">
-                            <label>Property Type</label>
+                            <label for="propertyType">Property Type</label>
                             <select class="form-select" id="propertyType">
                                 <option value="">Select type...</option>
                                 <option value="detached">Detached House</option>
@@ -441,7 +389,7 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Bedrooms</label>
+                            <label for="bedrooms">Bedrooms</label>
                             <select class="form-select" id="bedrooms">
                                 <option value="">Select...</option>
                                 <option value="1">1</option>
@@ -453,7 +401,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Bathrooms</label>
+                            <label for="bathrooms">Bathrooms</label>
                             <select class="form-select" id="bathrooms">
                                 <option value="">Select...</option>
                                 <option value="1">1</option>
@@ -466,7 +414,7 @@
 
                     <div class="form-row single">
                         <div class="form-group">
-                            <label>Key Features</label>
+                            <label for="keyFeatures">Key Features</label>
                             <textarea class="form-textarea" id="keyFeatures" placeholder="Enter key selling points - e.g. South-facing garden, recently renovated kitchen, period features..."></textarea>
                             <p class="form-hint">AI will expand these into compelling descriptions</p>
                         </div>
@@ -486,51 +434,46 @@
                 <div class="builder-card-body">
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Agent Name</label>
+                            <label for="agentName">Agent Name</label>
                             <input type="text" class="form-input" id="agentName" placeholder="e.g. John Smith">
                         </div>
                         <div class="form-group">
-                            <label>Phone</label>
+                            <label for="agentPhone">Phone</label>
                             <input type="tel" class="form-input" id="agentPhone" placeholder="e.g. 020 7123 4567">
                         </div>
                     </div>
                     <div class="form-row single">
                         <div class="form-group">
-                            <label>Email</label>
+                            <label for="agentEmail">Email</label>
                             <input type="email" class="form-input" id="agentEmail" placeholder="e.g. john@agency.co.uk">
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Template Selection Section -->
+            <!-- Branding & Colors Section -->
             <div class="builder-card">
                 <div class="builder-card-header">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/>
-                        <path d="M3 9h18"/>
-                        <path d="M9 21V9"/>
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 2a10 10 0 0 0 0 20"/>
+                        <path d="M2 12h20"/>
                     </svg>
-                    <h2>Choose Your Template</h2>
+                    <h2>Brochure Colors</h2>
                 </div>
                 <div class="builder-card-body">
-                    <div class="template-grid" id="templateGrid">
-                        <!-- Templates will be populated by JavaScript -->
-                    </div>
-
-                    <!-- Color Customization -->
-                    <div class="color-customization" id="colorCustomization" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                        <h4 style="margin-bottom: 15px; color: #374151;">Customize Colors</h4>
+                    <p style="margin: 0 0 16px 0; color: #6b7280; font-size: 14px;">Customise the colour scheme of your brochure. Defaults to a premium estate agent style.</p>
+                    <div class="color-customization" id="colorCustomization">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Primary Color</label>
+                                <label for="primaryColor">Primary Color</label>
                                 <div class="color-picker-wrapper">
                                     <input type="color" id="primaryColor" value="#4A1420">
                                     <input type="text" class="form-input color-hex" id="primaryColorHex" value="#4A1420" maxlength="7">
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Secondary Color</label>
+                                <label for="secondaryColor">Secondary Color</label>
                                 <div class="color-picker-wrapper">
                                     <input type="color" id="secondaryColor" value="#C4975A">
                                     <input type="text" class="form-input color-hex" id="secondaryColorHex" value="#C4975A" maxlength="7">
@@ -539,20 +482,38 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Text Color</label>
+                                <label for="textColor">Text Color</label>
                                 <div class="color-picker-wrapper">
                                     <input type="color" id="textColor" value="#2d2d2d">
                                     <input type="text" class="form-input color-hex" id="textColorHex" value="#2d2d2d" maxlength="7">
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>Background Color</label>
+                                <label for="bgColor">Background Color</label>
                                 <div class="color-picker-wrapper">
                                     <input type="color" id="bgColor" value="#FAF9F6">
                                     <input type="text" class="form-input color-hex" id="bgColorHex" value="#FAF9F6" maxlength="7">
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Multi-Page Template Preview -->
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <p style="margin: 0; font-size: 13px; font-weight: 500; color: #374151;">Template Preview</p>
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                <button type="button" id="prevPage" onclick="scrollPreview(-1)" style="width:24px;height:24px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;font-size:14px;line-height:1;color:#374151;display:flex;align-items:center;justify-content:center;padding:0;">&lsaquo;</button>
+                                <span id="pageIndicator" style="font-size: 11px; color: #6b7280; min-width: 32px; text-align: center;">1 / 9</span>
+                                <button type="button" id="nextPage" onclick="scrollPreview(1)" style="width:24px;height:24px;border:1px solid #d1d5db;border-radius:4px;background:#fff;cursor:pointer;font-size:14px;line-height:1;color:#374151;display:flex;align-items:center;justify-content:center;padding:0;">&rsaquo;</button>
+                            </div>
+                        </div>
+                        <div id="previewCarousel" style="overflow-x:auto;scroll-snap-type:x mandatory;display:flex;gap:12px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:6px 2px;">
+                            <!-- 9 mini page cards rendered by JS -->
+                        </div>
+                        <style>#previewCarousel::-webkit-scrollbar{display:none;}</style>
+                        <div id="pageLabel" style="text-align: center; font-size: 11px; color: #9ca3af; margin-top: 6px;">Cover</div>
+                        <div id="pageDots" style="display:flex;justify-content:center;gap:6px;margin-top:8px;"></div>
                     </div>
                 </div>
             </div>
@@ -632,6 +593,9 @@
             } else {
                 photoCount.style.display = 'none';
             }
+
+            // Update live preview with new photo
+            if (typeof renderPreviewPages === 'function') renderPreviewPages();
         }
 
         function removePhoto(index) {
@@ -640,563 +604,269 @@
         }
 
         // ============================================================
-        // TEMPLATE SELECTION
+        // COLOR PICKERS
         // ============================================================
-        // Real brochure templates with actual layouts and shapes
-        // Realistic brochure preview generator (Canva-style)
-        function brochurePreview(t, layoutType) {
-            // Simulated property image (gradient representing a house photo)
-            const imgBg = 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)';
-            const houseIcon = `<svg viewBox="0 0 24 24" fill="white" style="width:30%;height:30%;opacity:0.3;"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>`;
+        // ============================================================
+        // REAL TEMPLATE PREVIEW (uses actual KnightFrankTemplate)
+        // ============================================================
+        const PAGE_LABELS = ['Cover','Summary','Location','Property','Bedrooms','Floor Plan','Gardens','Details','Contact'];
 
-            const layouts = {
-                'hero-bottom': `
-                    <div style="height:100%;display:flex;flex-direction:column;background:${t.bg};">
-                        <div style="flex:1;background:${imgBg};display:flex;align-items:center;justify-content:center;position:relative;">
-                            ${houseIcon}
-                            <div style="position:absolute;top:4px;right:4px;background:${t.secondary};color:white;font-size:5px;padding:2px 4px;border-radius:2px;">FOR SALE</div>
-                        </div>
-                        <div style="background:${t.primary};padding:6px 8px;">
-                            <div style="background:white;height:4px;width:70%;margin-bottom:3px;border-radius:1px;opacity:0.9;"></div>
-                            <div style="background:${t.secondary};height:3px;width:40%;border-radius:1px;"></div>
-                        </div>
-                    </div>`,
-
-                'split-left': `
-                    <div style="height:100%;display:flex;background:${t.bg};">
-                        <div style="width:35%;background:${t.primary};padding:6px;display:flex;flex-direction:column;justify-content:space-between;">
-                            <div>
-                                <div style="background:${t.secondary};height:3px;width:60%;margin-bottom:4px;"></div>
-                                <div style="background:white;height:2px;width:80%;margin-bottom:2px;opacity:0.5;"></div>
-                                <div style="background:white;height:2px;width:70%;opacity:0.5;"></div>
-                            </div>
-                            <div style="background:${t.secondary};height:6px;width:50%;border-radius:1px;"></div>
-                        </div>
-                        <div style="flex:1;background:${imgBg};display:flex;align-items:center;justify-content:center;">
-                            ${houseIcon}
-                        </div>
-                    </div>`,
-
-                'framed': `
-                    <div style="height:100%;padding:5px;background:${t.bg};box-sizing:border-box;">
-                        <div style="height:100%;border:2px solid ${t.secondary};display:flex;flex-direction:column;overflow:hidden;">
-                            <div style="flex:1;background:${imgBg};display:flex;align-items:center;justify-content:center;position:relative;">
-                                ${houseIcon}
-                            </div>
-                            <div style="background:${t.primary};padding:5px 6px;">
-                                <div style="background:${t.secondary};height:3px;width:50%;margin-bottom:2px;"></div>
-                                <div style="background:white;height:2px;width:70%;opacity:0.7;"></div>
-                            </div>
-                        </div>
-                    </div>`,
-
-                'modern-grid': `
-                    <div style="height:100%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;background:${t.bg};padding:3px;">
-                        <div style="background:${imgBg};grid-column:1/3;display:flex;align-items:center;justify-content:center;position:relative;">
-                            ${houseIcon}
-                            <div style="position:absolute;bottom:4px;left:4px;right:4px;background:${t.primary};padding:3px 5px;opacity:0.9;">
-                                <div style="background:white;height:3px;width:60%;border-radius:1px;"></div>
-                            </div>
-                        </div>
-                        <div style="background:${t.primary};padding:4px;display:flex;flex-direction:column;justify-content:center;">
-                            <div style="background:${t.secondary};height:2px;width:50%;margin-bottom:3px;"></div>
-                            <div style="background:white;height:2px;width:80%;opacity:0.5;margin-bottom:2px;"></div>
-                            <div style="background:white;height:2px;width:60%;opacity:0.5;"></div>
-                        </div>
-                        <div style="background:linear-gradient(135deg,#a8edea 0%,#fed6e3 100%);display:flex;align-items:center;justify-content:center;">
-                            <svg viewBox="0 0 24 24" fill="${t.primary}" style="width:40%;opacity:0.4;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
-                        </div>
-                    </div>`,
-
-                'minimal': `
-                    <div style="height:100%;background:${t.bg};display:flex;flex-direction:column;">
-                        <div style="flex:1;background:${imgBg};display:flex;align-items:center;justify-content:center;">
-                            ${houseIcon}
-                        </div>
-                        <div style="padding:6px 8px;">
-                            <div style="background:${t.primary};height:3px;width:50%;margin-bottom:3px;"></div>
-                            <div style="display:flex;gap:3px;">
-                                <div style="background:${t.text};height:2px;flex:1;opacity:0.3;"></div>
-                                <div style="background:${t.secondary};height:2px;width:20%;"></div>
-                            </div>
-                        </div>
-                    </div>`,
-
-                'bold-header': `
-                    <div style="height:100%;display:flex;flex-direction:column;background:${t.bg};">
-                        <div style="background:${t.primary};padding:5px 6px;">
-                            <div style="background:${t.secondary};height:4px;width:40%;margin-bottom:2px;"></div>
-                            <div style="background:white;height:2px;width:60%;opacity:0.6;"></div>
-                        </div>
-                        <div style="flex:1;background:${imgBg};display:flex;align-items:center;justify-content:center;position:relative;">
-                            ${houseIcon}
-                            <div style="position:absolute;bottom:4px;right:4px;background:${t.secondary};color:white;font-size:6px;padding:2px 5px;border-radius:2px;font-weight:bold;">£XXX,XXX</div>
-                        </div>
-                    </div>`,
-
-                'corner-accent': `
-                    <div style="height:100%;background:${t.bg};position:relative;">
-                        <div style="position:absolute;top:0;left:0;border-style:solid;border-width:25px 25px 0 0;border-color:${t.primary} transparent transparent transparent;"></div>
-                        <div style="position:absolute;top:3px;left:3px;width:8px;height:8px;background:${t.secondary};"></div>
-                        <div style="height:60%;background:${imgBg};margin:20px 8px 4px 8px;display:flex;align-items:center;justify-content:center;">
-                            ${houseIcon}
-                        </div>
-                        <div style="padding:0 8px;">
-                            <div style="background:${t.primary};height:3px;width:70%;margin-bottom:3px;"></div>
-                            <div style="background:${t.text};height:2px;width:50%;opacity:0.3;"></div>
-                        </div>
-                    </div>`,
-
-                'elegant-overlay': `
-                    <div style="height:100%;background:${imgBg};position:relative;display:flex;align-items:center;justify-content:center;">
-                        ${houseIcon}
-                        <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,${t.primary});height:50%;"></div>
-                        <div style="position:absolute;bottom:8px;left:8px;right:8px;">
-                            <div style="background:${t.secondary};height:1px;width:30%;margin-bottom:4px;"></div>
-                            <div style="background:white;height:4px;width:80%;margin-bottom:2px;border-radius:1px;"></div>
-                            <div style="background:white;height:3px;width:50%;opacity:0.7;border-radius:1px;"></div>
-                        </div>
-                    </div>`,
-
-                'magazine': `
-                    <div style="height:100%;display:flex;flex-direction:column;background:${t.bg};">
-                        <div style="background:${t.primary};height:8px;display:flex;align-items:center;padding:0 5px;">
-                            <div style="background:${t.secondary};height:4px;width:20px;"></div>
-                        </div>
-                        <div style="flex:1;display:flex;">
-                            <div style="flex:1;background:${imgBg};display:flex;align-items:center;justify-content:center;">
-                                ${houseIcon}
-                            </div>
-                            <div style="width:35%;padding:5px;display:flex;flex-direction:column;justify-content:center;">
-                                <div style="background:${t.primary};height:3px;width:90%;margin-bottom:4px;"></div>
-                                <div style="background:${t.text};height:2px;width:100%;opacity:0.2;margin-bottom:2px;"></div>
-                                <div style="background:${t.text};height:2px;width:80%;opacity:0.2;margin-bottom:2px;"></div>
-                                <div style="background:${t.text};height:2px;width:90%;opacity:0.2;margin-bottom:4px;"></div>
-                                <div style="background:${t.secondary};height:4px;width:60%;border-radius:1px;"></div>
-                            </div>
-                        </div>
-                    </div>`,
-
-                'photo-focus': `
-                    <div style="height:100%;background:${imgBg};position:relative;display:flex;align-items:center;justify-content:center;">
-                        ${houseIcon}
-                        <div style="position:absolute;top:5px;left:5px;background:${t.bg};padding:4px 6px;border-left:3px solid ${t.secondary};">
-                            <div style="background:${t.primary};height:3px;width:25px;margin-bottom:2px;"></div>
-                            <div style="background:${t.text};height:2px;width:35px;opacity:0.4;"></div>
-                        </div>
-                        <div style="position:absolute;bottom:5px;right:5px;background:${t.primary};padding:3px 6px;">
-                            <div style="background:${t.secondary};height:3px;width:30px;"></div>
-                        </div>
-                    </div>`,
-
-                'dual-tone': `
-                    <div style="height:100%;display:flex;flex-direction:column;">
-                        <div style="flex:1;background:${t.primary};display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;">
-                            <div style="background:${t.secondary};height:4px;width:40%;"></div>
-                        </div>
-                        <div style="flex:2;background:${imgBg};display:flex;align-items:center;justify-content:center;position:relative;">
-                            ${houseIcon}
-                            <div style="position:absolute;bottom:5px;left:5px;right:5px;display:flex;justify-content:space-between;align-items:flex-end;">
-                                <div>
-                                    <div style="background:white;height:3px;width:40px;margin-bottom:2px;opacity:0.9;"></div>
-                                    <div style="background:white;height:2px;width:30px;opacity:0.6;"></div>
-                                </div>
-                                <div style="background:${t.secondary};padding:2px 5px;font-size:5px;color:white;">DETAILS</div>
-                            </div>
-                        </div>
-                    </div>`,
-
-                'card-style': `
-                    <div style="height:100%;padding:4px;background:#f0f0f0;box-sizing:border-box;">
-                        <div style="height:100%;background:${t.bg};box-shadow:0 1px 3px rgba(0,0,0,0.2);display:flex;flex-direction:column;overflow:hidden;">
-                            <div style="flex:1;background:${imgBg};display:flex;align-items:center;justify-content:center;">
-                                ${houseIcon}
-                            </div>
-                            <div style="padding:5px;">
-                                <div style="background:${t.primary};height:3px;width:65%;margin-bottom:3px;"></div>
-                                <div style="display:flex;gap:3px;margin-bottom:3px;">
-                                    <div style="background:${t.text};height:2px;flex:1;opacity:0.2;"></div>
-                                </div>
-                                <div style="background:${t.secondary};height:3px;width:35%;border-radius:1px;"></div>
-                            </div>
-                        </div>
-                    </div>`
-            };
-
-            return layouts[layoutType] || layouts['hero-bottom'];
+        // Generate SVG placeholder data URIs for demo mode — premium architectural silhouettes
+        let _placeholderIdx = 0;
+        function makePlaceholder(color1, color2, label, silhouette) {
+            const uid = label.replace(/\s/g,'').toLowerCase() + (++_placeholderIdx);
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
+                <defs>
+                    <linearGradient id="g_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="${color1}"/>
+                        <stop offset="100%" stop-color="${color2}"/>
+                    </linearGradient>
+                    <radialGradient id="h_${uid}" cx="40%" cy="35%" r="60%">
+                        <stop offset="0%" stop-color="white" stop-opacity="0.12"/>
+                        <stop offset="100%" stop-color="white" stop-opacity="0"/>
+                    </radialGradient>
+                    <linearGradient id="v_${uid}" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="black" stop-opacity="0.15"/>
+                        <stop offset="20%" stop-color="black" stop-opacity="0"/>
+                        <stop offset="75%" stop-color="black" stop-opacity="0"/>
+                        <stop offset="100%" stop-color="black" stop-opacity="0.25"/>
+                    </linearGradient>
+                </defs>
+                <rect width="800" height="600" fill="url(#g_${uid})"/>
+                <rect width="800" height="600" fill="url(#h_${uid})"/>
+                ${silhouette || ''}
+                <rect width="800" height="600" fill="url(#v_${uid})"/>
+                <text x="400" y="320" text-anchor="middle" fill="white" font-family="Georgia,serif" font-size="36" opacity="0.55" style="text-shadow:0 2px 8px rgba(0,0,0,0.3)">${label}</text>
+            </svg>`;
+            return 'data:image/svg+xml;base64,' + btoa(svg);
         }
 
-        const templates = [
-            // ========== LUXURY LAYOUTS ==========
-            {
-                id: 'luxury_estate',
-                name: 'Luxury Estate',
-                category: 'Luxury',
-                desc: 'Elegant overlay with gold accents',
-                primary: '#1a1a2e',
-                secondary: '#c9a227',
-                text: '#2d2d2d',
-                bg: '#fefefe',
-                layoutType: 'elegant-overlay'
-            },
-            {
-                id: 'premium_gold',
-                name: 'Premium Gold',
-                category: 'Luxury',
-                desc: 'Classic gold frame border',
-                primary: '#000000',
-                secondary: '#d4af37',
-                text: '#333333',
-                bg: '#ffffff',
-                layoutType: 'framed'
-            },
-            {
-                id: 'platinum_prestige',
-                name: 'Platinum Prestige',
-                category: 'Luxury',
-                desc: 'Sophisticated frame with bottom overlay',
-                primary: '#1a1a1a',
-                secondary: '#c0c0c0',
-                text: '#2d2d2d',
-                bg: '#ffffff',
-                layoutType: 'framed'
-            },
-            {
-                id: 'champagne_elegance',
-                name: 'Champagne Elegance',
-                category: 'Luxury',
-                desc: 'Subtle gradient with centered text area',
-                primary: '#2c2c2c',
-                secondary: '#d4c5a9',
-                text: '#1a1a1a',
-                bg: '#fffef9',
-                layout: 'centered-panel',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#d4c5a9 0%,#ccc 30%,#999 100%);">
-                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;height:30%;background:${t.bg};border:1px solid ${t.secondary};"></div>
-                    </div>`
-            },
-            {
-                id: 'doorstep_signature',
-                name: 'Doorstep Signature',
-                category: 'Luxury',
-                desc: 'Brand red with elegant gold accents',
-                primary: '#8B1538',
-                secondary: '#D4AF37',
-                text: '#2d2d2d',
-                bg: '#ffffff',
-                layout: 'branded-header',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#e0e0e0 0%,#bbb 100%);">
-                        <div style="position:absolute;top:0;left:0;right:0;height:35%;background:${t.primary};"></div>
-                        <div style="position:absolute;top:33%;left:10%;right:10%;height:3px;background:${t.secondary};"></div>
-                        <div style="position:absolute;bottom:10%;left:10%;right:10%;height:20%;background:${t.primary};opacity:0.9;"></div>
-                    </div>`
-            },
-            {
-                id: 'ruby_prestige',
-                name: 'Ruby Prestige',
-                category: 'Luxury',
-                desc: 'Deep red elegance with silver frame',
-                primary: '#9B1B30',
-                secondary: '#C0C0C0',
-                text: '#1a1a1a',
-                bg: '#fafafa',
-                layout: 'framed-ruby',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
-                        <div style="position:absolute;inset:8%;border:3px solid ${t.secondary};"></div>
-                        <div style="position:absolute;top:0;left:0;right:0;height:25%;background:${t.primary};"></div>
-                        <div style="position:absolute;bottom:0;left:0;right:0;height:15%;background:${t.primary};"></div>
-                    </div>`
-            },
-            {
-                id: 'crimson_classic',
-                name: 'Crimson Classic',
-                category: 'Luxury',
-                desc: 'Bold crimson sidebar with cream',
-                primary: '#4A1420',
-                secondary: '#F5E6D3',
-                text: '#2d2d2d',
-                bg: '#fffef8',
-                layout: 'crimson-side',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:${t.secondary};">
-                        <div style="position:absolute;top:0;left:0;width:35%;height:100%;background:${t.primary};"></div>
-                        <div style="position:absolute;top:20%;left:33%;width:4px;height:60%;background:${t.secondary};"></div>
-                    </div>`
-            },
-            {
-                id: 'bordeaux_estate',
-                name: 'Bordeaux Estate',
-                category: 'Luxury',
-                desc: 'Wine red with sophisticated overlay',
-                primary: '#722F37',
-                secondary: '#C9B037',
-                text: '#333333',
-                bg: '#ffffff',
-                layout: 'bordeaux',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ddd 0%,#aaa 100%);">
-                        <div style="position:absolute;bottom:0;left:0;right:0;height:40%;background:${t.primary};"></div>
-                        <div style="position:absolute;bottom:38%;left:15%;right:15%;height:4px;background:${t.secondary};"></div>
-                        <div style="position:absolute;top:10%;right:10%;width:25px;height:25px;border-radius:50%;background:${t.secondary};"></div>
-                    </div>`
-            },
-
-            // ========== MODERN LAYOUTS ==========
-            {
-                id: 'modern_sidebar',
-                name: 'Modern Sidebar',
-                category: 'Modern',
-                desc: 'Bold side panel with accent stripe',
-                primary: '#2d3436',
-                secondary: '#0984e3',
-                text: '#2d3436',
-                bg: '#ffffff',
-                layout: 'side-panel',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
-                        <div style="position:absolute;top:0;left:0;width:30%;height:100%;background:${t.primary};"></div>
-                        <div style="position:absolute;top:20%;left:28%;width:4px;height:60%;background:${t.secondary};"></div>
-                    </div>`
-            },
-            {
-                id: 'contemporary_angle',
-                name: 'Contemporary Angle',
-                category: 'Modern',
-                desc: 'Dynamic angled overlay',
-                primary: '#1e272e',
-                secondary: '#ff6b6b',
-                text: '#2d3436',
-                bg: '#f8f9fa',
-                layout: 'angled',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);overflow:hidden;">
-                        <div style="position:absolute;bottom:-10%;left:-5%;right:-5%;height:50%;background:${t.primary};transform:rotate(-5deg);"></div>
-                        <div style="position:absolute;bottom:42%;left:0;right:0;height:3px;background:${t.secondary};transform:rotate(-5deg);"></div>
-                    </div>`
-            },
-            {
-                id: 'urban_minimal',
-                name: 'Urban Minimal',
-                category: 'Modern',
-                desc: 'Clean bottom bar with circle badge',
-                primary: '#34495e',
-                secondary: '#e67e22',
-                text: '#2c3e50',
-                bg: '#ffffff',
-                layout: 'badge-corner',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
-                        <div style="position:absolute;bottom:0;left:0;right:0;height:18%;background:${t.primary};"></div>
-                        <div style="position:absolute;top:8%;right:8%;width:24px;height:24px;background:${t.secondary};border-radius:50%;"></div>
-                    </div>`
-            },
-
-            // ========== CLASSIC LAYOUTS ==========
-            {
-                id: 'classic_heritage',
-                name: 'Classic Heritage',
-                category: 'Classic',
-                desc: 'Traditional ornate double border',
-                primary: '#4a3728',
-                secondary: '#8b7355',
-                text: '#3d3d3d',
-                bg: '#fffef9',
-                layout: 'double-frame',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:${t.bg};">
-                        <div style="position:absolute;inset:5%;border:2px solid ${t.primary};"></div>
-                        <div style="position:absolute;inset:8%;border:1px solid ${t.secondary};"></div>
-                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;height:60%;background:linear-gradient(180deg,#ccc 0%,#999 100%);"></div>
-                    </div>`
-            },
-            {
-                id: 'country_manor',
-                name: 'Country Manor',
-                category: 'Classic',
-                desc: 'Green header and footer bands',
-                primary: '#2d5a27',
-                secondary: '#8b6914',
-                text: '#3a3a3a',
-                bg: '#fdfcf8',
-                layout: 'bands',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
-                        <div style="position:absolute;top:0;left:0;right:0;height:12%;background:${t.primary};"></div>
-                        <div style="position:absolute;bottom:0;left:0;right:0;height:20%;background:${t.primary};"></div>
-                        <div style="position:absolute;top:12%;left:30%;right:30%;height:2px;background:${t.secondary};"></div>
-                    </div>`
-            },
-            {
-                id: 'victorian_charm',
-                name: 'Victorian Charm',
-                category: 'Classic',
-                desc: 'Corner accents with center divider',
-                primary: '#5c3d2e',
-                secondary: '#a67c52',
-                text: '#3d2b1f',
-                bg: '#faf8f5',
-                layout: 'corners',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
-                        <div style="position:absolute;top:5%;left:5%;width:15%;height:15%;border-top:3px solid ${t.primary};border-left:3px solid ${t.primary};"></div>
-                        <div style="position:absolute;top:5%;right:5%;width:15%;height:15%;border-top:3px solid ${t.primary};border-right:3px solid ${t.primary};"></div>
-                        <div style="position:absolute;bottom:5%;left:5%;width:15%;height:15%;border-bottom:3px solid ${t.primary};border-left:3px solid ${t.primary};"></div>
-                        <div style="position:absolute;bottom:5%;right:5%;width:15%;height:15%;border-bottom:3px solid ${t.primary};border-right:3px solid ${t.primary};"></div>
-                        <div style="position:absolute;bottom:25%;left:20%;right:20%;height:1px;background:${t.secondary};"></div>
-                    </div>`
-            },
-
-            // ========== MINIMAL LAYOUTS ==========
-            {
-                id: 'swiss_grid',
-                name: 'Swiss Grid',
-                category: 'Minimal',
-                desc: 'Bold typography, red square accent',
-                primary: '#000000',
-                secondary: '#ff0000',
-                text: '#1a1a1a',
-                bg: '#ffffff',
-                layout: 'grid-accent',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#eee 0%,#ccc 100%);">
-                        <div style="position:absolute;bottom:10%;left:8%;width:70%;height:3px;background:${t.primary};"></div>
-                        <div style="position:absolute;bottom:8%;right:8%;width:12%;height:20%;background:${t.secondary};"></div>
-                    </div>`
-            },
-            {
-                id: 'pure_white',
-                name: 'Pure White',
-                category: 'Minimal',
-                desc: 'Maximum whitespace, single line',
-                primary: '#1a1a1a',
-                secondary: '#666666',
-                text: '#333333',
-                bg: '#ffffff',
-                layout: 'single-line',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#f5f5f5 0%,#ddd 100%);">
-                        <div style="position:absolute;bottom:12%;left:15%;right:15%;height:1px;background:${t.primary};"></div>
-                    </div>`
-            },
-            {
-                id: 'nordic_clean',
-                name: 'Nordic Clean',
-                category: 'Minimal',
-                desc: 'Soft colors with subtle frame',
-                primary: '#2E5266',
-                secondary: '#D1E8E2',
-                text: '#1a2933',
-                bg: '#ffffff',
-                layout: 'soft-frame',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#e8f4f2 0%,#ccd9d6 100%);">
-                        <div style="position:absolute;inset:10%;border:1px solid ${t.primary};opacity:0.5;"></div>
-                        <div style="position:absolute;bottom:15%;left:50%;transform:translateX(-50%);width:30%;height:2px;background:${t.primary};"></div>
-                    </div>`
-            },
-
-            // ========== BOLD LAYOUTS ==========
-            {
-                id: 'bold_split',
-                name: 'Bold Split',
-                category: 'Bold',
-                desc: 'High contrast top section',
-                primary: '#ff5722',
-                secondary: '#212121',
-                text: '#212121',
-                bg: '#ffffff',
-                layout: 'top-heavy',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);">
-                        <div style="position:absolute;top:0;left:0;right:0;height:40%;background:${t.primary};"></div>
-                        <div style="position:absolute;top:8%;right:8%;width:18px;height:18px;background:${t.secondary};border-radius:50%;"></div>
-                    </div>`
-            },
-            {
-                id: 'neon_edge',
-                name: 'Neon Edge',
-                category: 'Bold',
-                desc: 'Dark theme with gradient glow',
-                primary: '#0f0f23',
-                secondary: '#00d4ff',
-                text: '#ffffff',
-                bg: '#0f0f23',
-                layout: 'dark-gradient',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:${t.primary};">
-                        <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,212,255,0.2) 0%,rgba(255,0,255,0.2) 100%);"></div>
-                        <div style="position:absolute;bottom:25%;left:10%;right:10%;height:2px;background:${t.secondary};box-shadow:0 0 10px ${t.secondary};"></div>
-                    </div>`
-            },
-            {
-                id: 'geometric_pop',
-                name: 'Geometric Pop',
-                category: 'Bold',
-                desc: 'Playful circles and shapes',
-                primary: '#6c5ce7',
-                secondary: '#00cec9',
-                text: '#2d3436',
-                bg: '#ffffff',
-                layout: 'shapes',
-                previewHTML: (t) => `
-                    <div style="position:relative;height:100%;background:linear-gradient(180deg,#ccc 0%,#999 100%);overflow:hidden;">
-                        <div style="position:absolute;top:-15%;left:-15%;width:50%;height:50%;background:${t.primary};border-radius:50%;opacity:0.8;"></div>
-                        <div style="position:absolute;bottom:-10%;right:-10%;width:40%;height:40%;background:${t.secondary};border-radius:50%;opacity:0.8;"></div>
-                        <div style="position:absolute;bottom:10%;left:10%;right:10%;height:20%;background:rgba(255,255,255,0.9);"></div>
-                    </div>`
-            },
+        const DEMO_PHOTOS = [
+            { id: 'demo_1', name: 'exterior.jpg', category: 'exterior', url: makePlaceholder('#8B7D6B','#6B5D4B','Exterior',
+                '<line x1="0" y1="420" x2="800" y2="420" stroke="white" stroke-opacity="0.12" stroke-width="1"/><polygon points="200,420 280,340 360,380 440,310 520,370 600,420" fill="white" fill-opacity="0.07"/><rect x="290" y="350" width="40" height="30" rx="2" fill="white" fill-opacity="0.06"/><rect x="470" y="340" width="40" height="30" rx="2" fill="white" fill-opacity="0.06"/>'), analysis: { room_type: 'exterior' } },
+            { id: 'demo_2', name: 'kitchen.jpg',  category: 'kitchen',  url: makePlaceholder('#B8A88A','#9A8A6A','Kitchen',
+                '<rect x="150" y="200" width="200" height="260" rx="3" fill="white" fill-opacity="0.06"/><line x1="150" y1="200" x2="350" y2="200" stroke="white" stroke-opacity="0.1" stroke-width="1"/><line x1="250" y1="200" x2="250" y2="460" stroke="white" stroke-opacity="0.06" stroke-width="1"/>'), analysis: { room_type: 'kitchen' } },
+            { id: 'demo_3', name: 'bedroom.jpg',  category: 'bedroom',  url: makePlaceholder('#A899B0','#8A7990','Bedroom',
+                '<path d="M180,440 Q200,380 260,400 Q320,350 400,380 Q480,350 540,400 Q600,380 620,440 Z" fill="white" fill-opacity="0.06"/><line x1="180" y1="440" x2="620" y2="440" stroke="white" stroke-opacity="0.1" stroke-width="1"/>'), analysis: { room_type: 'bedroom' } },
+            { id: 'demo_4', name: 'living.jpg',   category: 'interior', url: makePlaceholder('#B09878','#8B7355','Living Room',
+                '<rect x="320" y="380" width="160" height="100" rx="4" fill="white" fill-opacity="0.06"/><rect x="340" y="360" width="120" height="20" rx="2" fill="white" fill-opacity="0.05"/><line x1="400" y1="400" x2="400" y2="460" stroke="white" stroke-opacity="0.06" stroke-width="1"/>'), analysis: { room_type: 'living_room' } },
+            { id: 'demo_5', name: 'bathroom.jpg', category: 'bathroom', url: makePlaceholder('#7BAAB4','#5A8A94','Bathroom',
+                '<rect x="160" y="220" width="480" height="240" rx="2" fill="none" stroke="white" stroke-opacity="0.08" stroke-width="1"/><line x1="320" y1="220" x2="320" y2="460" stroke="white" stroke-opacity="0.05" stroke-width="1"/><line x1="480" y1="220" x2="480" y2="460" stroke="white" stroke-opacity="0.05" stroke-width="1"/><line x1="160" y1="340" x2="640" y2="340" stroke="white" stroke-opacity="0.05" stroke-width="1"/>'), analysis: { room_type: 'bathroom' } },
+            { id: 'demo_6', name: 'garden.jpg',   category: 'garden',   url: makePlaceholder('#5B8E5B','#3A6E3A','Garden',
+                '<line x1="0" y1="430" x2="800" y2="430" stroke="white" stroke-opacity="0.1" stroke-width="1"/><circle cx="200" cy="360" r="60" fill="white" fill-opacity="0.06"/><circle cx="200" cy="340" r="50" fill="white" fill-opacity="0.04"/><circle cx="580" cy="370" r="50" fill="white" fill-opacity="0.06"/><circle cx="580" cy="350" r="40" fill="white" fill-opacity="0.04"/>'), analysis: { room_type: 'garden' } },
+            { id: 'demo_7', name: 'exterior2.jpg',category: 'exterior', url: makePlaceholder('#7A8B9D','#5A6B7D','Exterior',
+                '<line x1="0" y1="410" x2="800" y2="410" stroke="white" stroke-opacity="0.1" stroke-width="1"/><polygon points="250,410 300,350 400,320 500,350 550,410" fill="white" fill-opacity="0.06"/><rect x="330" y="355" width="35" height="25" rx="2" fill="white" fill-opacity="0.05"/><rect x="435" y="355" width="35" height="25" rx="2" fill="white" fill-opacity="0.05"/>'), analysis: { room_type: 'exterior' } },
+            { id: 'demo_8', name: 'garden2.jpg',  category: 'garden',   url: makePlaceholder('#6E8E5E','#4E6E3E','Garden',
+                '<line x1="0" y1="420" x2="800" y2="420" stroke="white" stroke-opacity="0.1" stroke-width="1"/><rect x="100" y="380" width="600" height="40" rx="3" fill="white" fill-opacity="0.04"/><line x1="200" y1="380" x2="200" y2="420" stroke="white" stroke-opacity="0.06" stroke-width="2"/><line x1="350" y1="380" x2="350" y2="420" stroke="white" stroke-opacity="0.06" stroke-width="2"/><line x1="500" y1="380" x2="500" y2="420" stroke="white" stroke-opacity="0.06" stroke-width="2"/>'), analysis: { room_type: 'garden' } },
         ];
 
-        let selectedTemplate = templates[0]; // Default to first template
+        function scrollPreview(dir) {
+            const c = document.getElementById('previewCarousel');
+            if (!c || !c.firstElementChild) return;
+            const w = c.firstElementChild.offsetWidth + 12;
+            c.scrollBy({ left: dir * w, behavior: 'smooth' });
+        }
 
-        function renderTemplates() {
-            const grid = document.getElementById('templateGrid');
+        // Debounce to avoid re-rendering on every keystroke
+        let _previewTimer = null;
+        function renderPreviewPages() {
+            clearTimeout(_previewTimer);
+            _previewTimer = setTimeout(_doRenderPreview, 150);
+        }
 
-            // Group by category
-            const categories = [...new Set(templates.map(t => t.category))];
+        function _doRenderPreview() {
+            // Wait for KnightFrankTemplate to load
+            if (typeof KnightFrankTemplate === 'undefined') {
+                console.warn('KnightFrankTemplate not loaded yet');
+                return;
+            }
 
-            grid.innerHTML = categories.map(cat => `
-                <div class="template-category" style="grid-column: 1 / -1; margin-top: 15px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">${cat}</h4>
-                </div>
-                ${templates.filter(t => t.category === cat).map(t => `
-                    <div class="template-card ${t.id === selectedTemplate.id ? 'selected' : ''}" data-template-id="${t.id}">
-                        <div class="template-preview" style="border-radius:4px;overflow:hidden;">
-                            ${t.previewHTML ? t.previewHTML(t) : brochurePreview(t, t.layoutType || 'hero-bottom')}
-                        </div>
-                        <div class="template-name">${t.name}</div>
-                        <div class="template-desc">${t.desc}</div>
-                    </div>
-                `).join('')}
-            `).join('');
+            const primary = document.getElementById('primaryColor').value;
+            const secondary = document.getElementById('secondaryColor').value;
+            const txt = document.getElementById('textColor').value;
+            const bg = document.getElementById('bgColor').value;
 
-            // Add click handlers
-            grid.querySelectorAll('.template-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const templateId = card.dataset.templateId;
-                    selectedTemplate = templates.find(t => t.id === templateId);
-                    renderTemplates();
-                    updateColorPickers();
-                    document.getElementById('colorCustomization').style.display = 'block';
-                });
+            // Build photos array: use uploaded photos if available, else demo placeholders
+            let photos;
+            if (uploadedPhotos.length > 0) {
+                photos = uploadedPhotos.map((p, i) => ({
+                    id: `photo_${i+1}`,
+                    name: p.file?.name || `photo_${i+1}.jpg`,
+                    category: 'interior',
+                    url: p.dataUrl,
+                    analysis: { room_type: 'interior' }
+                }));
+            } else {
+                photos = DEMO_PHOTOS;
+            }
+
+            // Build property data from form — rich defaults so all 9 pages look populated
+            const demoProperty = {
+                address: '42 Oak Lane, Richmond, TW10 6QD',
+                askingPrice: '1,250,000',
+                propertyType: 'detached',
+                bedrooms: '4', bathrooms: '2', receptions: '3',
+                sqft: '3850',
+                keyFeature: 'beautiful surroundings and far-reaching views',
+                entranceHall: true, kitchen: true, utility: true,
+                study: true, cloakroom: true, masterEnsuite: true,
+                floors: 2, sittingRoom: true, diningRoom: true,
+                familyRoom: true, garden: true, garage: true,
+                parking: true, acres: '1.5',
+                tenure: 'Freehold', councilTaxBand: 'G', epc: 'C'
+            };
+
+            // Form values override demo defaults
+            const formAddress = document.getElementById('address').value;
+            const formPrice = document.getElementById('askingPrice').value;
+            const formType = document.getElementById('propertyType').value;
+            const formBeds = document.getElementById('bedrooms').value;
+            const formBaths = document.getElementById('bathrooms').value;
+            const formFeatures = document.getElementById('keyFeatures')?.value || '';
+
+            const property = { ...demoProperty };
+            if (formAddress) property.address = formAddress;
+            if (formPrice) property.askingPrice = formPrice;
+            if (formType) property.propertyType = formType;
+            if (formBeds) property.bedrooms = formBeds;
+            if (formBaths) property.bathrooms = formBaths;
+            if (formFeatures) property.keyFeatures = formFeatures;
+
+            const agentName = document.getElementById('agentName').value;
+            const agentPhone = document.getElementById('agentPhone').value;
+            const agentEmail = document.getElementById('agentEmail')?.value || '';
+
+            const agent = {
+                officeName: agentName || 'Doorstep',
+                name: agentName || 'Doorstep',
+                phone: agentPhone || '020 7946 0958',
+                email: agentEmail || 'enquiries@doorstep.co.uk',
+                website: 'doorstep.co.uk',
+                address: 'London, United Kingdom'
+            };
+
+            const location = {
+                area: 'Richmond upon Thames',
+                areaDescription: 'one of the most sought-after areas in southwest London',
+                nearestTown: { name: 'Richmond', distance: '0.8 miles' },
+                nearestStation: { name: 'Richmond', distance: '0.6 miles', journeyTime: '20 minutes' },
+                londonDistance: 'approximately 10 miles',
+                schools: [
+                    { name: 'The German School' },
+                    { name: 'Richmond Park Academy' },
+                    { name: 'Sheen Mount Primary' }
+                ]
+            };
+
+            // Generate real template HTML
+            const html = KnightFrankTemplate.generate(
+                { property, photos, location, agent },
+                { brand: { primary, secondary, accent: primary, text: txt, textLight: '#595959', background: bg, logoUrl: '/static/images/doorstep-logo.png' } }
+            );
+
+            // Parse the HTML to extract styles + pages
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const styleContent = doc.querySelector('style')?.textContent || '';
+            const pages = doc.querySelectorAll('.brochure-page');
+
+            if (pages.length === 0) return;
+
+            // Inject KF styles into a scoped style element (only once, update in-place)
+            let scopedStyle = document.getElementById('kf-preview-styles');
+            if (!scopedStyle) {
+                scopedStyle = document.createElement('style');
+                scopedStyle.id = 'kf-preview-styles';
+                document.head.appendChild(scopedStyle);
+            }
+            // Scope all KF styles under #previewCarousel to avoid polluting the page
+            const scopedCSS = styleContent.replace(/(^|\})\s*([^@\}][^{]*)\{/gm, (match, prefix, selector) => {
+                // Don't scope @media, @font-face, @import
+                if (selector.trim().startsWith('@')) return match;
+                // Scope each selector
+                const scoped = selector.split(',').map(s => `#previewCarousel .kf-card ${s.trim()}`).join(', ');
+                return `${prefix} ${scoped} {`;
             });
+            scopedStyle.textContent = scopedCSS;
+
+            // Build carousel cards
+            const carousel = document.getElementById('previewCarousel');
+            const currentScroll = carousel.scrollLeft;
+            const carouselWidth = carousel.clientWidth;
+
+            // Calculate scale: KF pages are 297mm wide ≈ 1123px. We want to fit in carousel width.
+            const kfWidthPx = 1123; // 297mm * ~3.78px/mm
+            const kfHeightPx = 794; // 210mm * ~3.78px/mm
+            const scale = carouselWidth / kfWidthPx;
+
+            let cardsHTML = '';
+            pages.forEach((page, i) => {
+                // Outer wrapper: the visible card with correct scaled dimensions
+                // Inner: the real KF page at full size, scaled down with CSS transform
+                cardsHTML += `
+                    <div class="kf-card" style="
+                        min-width:100%;flex-shrink:0;scroll-snap-align:start;
+                        width:${carouselWidth}px;height:${kfHeightPx * scale}px;
+                        overflow:hidden;border-radius:6px;
+                        box-shadow:0 2px 8px rgba(0,0,0,0.12);border:1px solid rgba(0,0,0,0.06);position:relative;
+                    ">
+                        <div style="
+                            width:${kfWidthPx}px;height:${kfHeightPx}px;
+                            transform:scale(${scale});transform-origin:top left;
+                            position:absolute;top:0;left:0;
+                        ">
+                            ${page.outerHTML}
+                        </div>
+                    </div>
+                `;
+            });
+
+            carousel.innerHTML = cardsHTML;
+            // Restore scroll position
+            carousel.scrollLeft = currentScroll;
+
+            // Render dot navigation
+            const dotsContainer = document.getElementById('pageDots');
+            if (dotsContainer) {
+                const dotColor = primary || '#4A1420';
+                dotsContainer.innerHTML = PAGE_LABELS.map((_, i) => `<button type="button" data-page="${i}" style="width:8px;height:8px;border-radius:50%;border:none;padding:0;cursor:pointer;background:${i === 0 ? dotColor : '#d1d5db'};transition:background 0.2s;" title="${PAGE_LABELS[i]}"></button>`).join('');
+                dotsContainer.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const pageIdx = parseInt(btn.dataset.page);
+                        const card = carousel.firstElementChild;
+                        if (card) {
+                            const w = card.offsetWidth + 12;
+                            carousel.scrollTo({ left: pageIdx * w, behavior: 'smooth' });
+                        }
+                    });
+                });
+            }
+
+            updatePageIndicator();
         }
 
-        function updateColorPickers() {
-            document.getElementById('primaryColor').value = selectedTemplate.primary;
-            document.getElementById('primaryColorHex').value = selectedTemplate.primary;
-            document.getElementById('secondaryColor').value = selectedTemplate.secondary;
-            document.getElementById('secondaryColorHex').value = selectedTemplate.secondary;
-            document.getElementById('textColor').value = selectedTemplate.text;
-            document.getElementById('textColorHex').value = selectedTemplate.text;
-            document.getElementById('bgColor').value = selectedTemplate.bg;
-            document.getElementById('bgColorHex').value = selectedTemplate.bg;
+        function updatePageIndicator() {
+            const c = document.getElementById('previewCarousel');
+            if (!c || !c.firstElementChild) return;
+            const w = c.firstElementChild.offsetWidth + 12;
+            const idx = Math.round(c.scrollLeft / w);
+            const clamped = Math.max(0, Math.min(idx, PAGE_LABELS.length - 1));
+            document.getElementById('pageIndicator').textContent = `${clamped + 1} / ${PAGE_LABELS.length}`;
+            document.getElementById('pageLabel').textContent = PAGE_LABELS[clamped];
+
+            // Update dot navigation active state
+            const dots = document.getElementById('pageDots');
+            if (dots) {
+                const primary = document.getElementById('primaryColor')?.value || '#4A1420';
+                dots.querySelectorAll('button').forEach((btn, i) => {
+                    btn.style.background = (i === clamped) ? primary : '#d1d5db';
+                });
+            }
         }
 
-        // Color picker sync
+        // Attach scroll listener for page indicator
+        document.getElementById('previewCarousel').addEventListener('scroll', updatePageIndicator);
+
         function setupColorPickers() {
             const pairs = [
                 ['primaryColor', 'primaryColorHex'],
@@ -1211,6 +881,7 @@
 
                 colorInput.addEventListener('input', (e) => {
                     hexInput.value = e.target.value.toUpperCase();
+                    renderPreviewPages();
                 });
 
                 hexInput.addEventListener('change', (e) => {
@@ -1219,14 +890,23 @@
                     if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
                         colorInput.value = val;
                         hexInput.value = val.toUpperCase();
+                        renderPreviewPages();
                     }
                 });
             });
+
+            // Also update preview when form fields change
+            ['address', 'askingPrice', 'agentName', 'agentPhone'].forEach(id => {
+                document.getElementById(id).addEventListener('input', renderPreviewPages);
+            });
+            // Dropdowns too
+            ['bedrooms', 'bathrooms', 'propertyType'].forEach(id => {
+                document.getElementById(id).addEventListener('change', renderPreviewPages);
+            });
         }
 
-        // Initialize templates
-        renderTemplates();
         setupColorPickers();
+        renderPreviewPages();
 
         // Form submission - with photo analysis and correct API format
         document.getElementById('generateForm').addEventListener('submit', async (e) => {
@@ -1320,7 +1000,7 @@
                     preferences: {
                         autoGenerate: true,
                         style: 'premium',
-                        template: selectedTemplate.id,
+                        template: 'knight_frank_prestige',
                         customColors: {
                             primary: document.getElementById('primaryColor').value,
                             secondary: document.getElementById('secondaryColor').value,
@@ -1389,5 +1069,6 @@
         `;
         document.head.appendChild(style);
     </script>
+    <script src="knight_frank_template.js?v=20260226_KF"></script>
 </body>
 </html>
