@@ -138,11 +138,6 @@ function pasteElement(offsetX = 20, offsetY = 20) {
             element: newElement
         });
 
-        // Re-attach drag handlers if available
-        if (typeof initElementDrag === 'function') {
-            initElementDrag(newElement);
-        }
-
         // Select the new element
         selectElement(newElement);
 
@@ -556,23 +551,7 @@ function restoreEditorState(snapshot) {
 
 // Re-render all design elements from EditorState.elements
 function rerenderDesignElements() {
-    // Remove existing design elements
-    document.querySelectorAll('.design-element').forEach(el => el.remove());
-
-    // Re-render elements for each page
-    Object.keys(EditorState.elements || {}).forEach(pageId => {
-        const elements = EditorState.elements[pageId] || [];
-        elements.forEach(elementData => {
-            if (typeof ElementDrag !== 'undefined' && typeof ElementDrag.renderElementOnCanvas === 'function') {
-                ElementDrag.renderElementOnCanvas(elementData, pageId);
-            }
-        });
-    });
-
-    // Update layer panel if available
-    if (typeof LayerSystem !== 'undefined' && typeof LayerSystem.render === 'function') {
-        LayerSystem.render();
-    }
+    // Removed — Canva-like drag/layer features cleaned up
 }
 
 function undo() {
@@ -874,23 +853,120 @@ async function generatePageSpecificDescription(page) {
             ? `\n\nThis property is at ${propertyAddress}. Key features include: ${featuresList}. You MUST mention relevant key features in your description.`
             : (propertyAddress ? `\n\nThis property is at ${propertyAddress}.` : '');
 
-        // Create professional, fact-focused prompts - NO FLOWERY LANGUAGE
+        // Brochure-specific prompts — tuned for page layout constraints
+        // Kitchen/bedrooms have ~60% page width for text, so keep descriptions tight
+        // Location/garden pages have more text space
+        const beds = property.bedrooms || '';
+        const baths = property.bathrooms || '';
+        const propType = property.propertyType || property.property_type || 'property';
+
         const roomPrompts = {
-            kitchen: `Describe the KITCHEN factually and specifically.${photoContext}${propertyContext} Focus ONLY on: appliances, worktop material, cabinetry style, storage features, lighting, flooring, dining space. State facts. NO metaphors, NO lifestyle descriptions. 100-150 words. Be direct and informative.`,
+            kitchen: `Write a kitchen description for a premium property brochure.${photoContext}${propertyContext}
 
-            living: `Describe the LIVING SPACES factually and specifically.${photoContext}${propertyContext} Focus ONLY on: room proportions, flooring type, window features, architectural details (fireplaces, moldings), built-in features, lighting. State what IS visible. NO storytelling. 100-150 words.`,
+STRUCTURE: Write 3-4 SHORT paragraphs (2-3 sentences each). Total 100-130 words MAXIMUM.
 
-            bedrooms: `Describe the BEDROOMS factually and specifically.${photoContext}${propertyContext} Focus ONLY on: number of bedrooms, sizes, built-in storage, ensuite details, flooring, windows/light. State facts. NO aspirational language, NO "sanctuary" or "retreat". 100-150 words.`,
+Paragraph 1: Appliances and worktops — name specific brands/materials if visible (Aga, Siemens, granite, marble).
+Paragraph 2: Layout — island, breakfast bar, dining area, utility room connection.
+Paragraph 3: Light and character — windows, ceiling height, beams, flooring.
 
-            bathrooms: `Describe the BATHROOMS factually and specifically.${photoContext}${propertyContext} Focus ONLY on: fixtures (shower/bath/toilet/sink), tiling, flooring, fittings quality, lighting. State what exists. 80-120 words.`,
+RULES:
+- Name SPECIFIC materials and brands visible in photos (not generic "quality appliances")
+- Include room connections: "leads through to", "opens onto", "adjoins"
+- Mention aspect/orientation if known
+- NO: "heart of the home", "perfect for entertaining", "hub of family life"
+- Write like Savills, not like a lifestyle magazine`,
 
-            garden: `Describe the OUTDOOR SPACES factually and specifically.${photoContext}${propertyContext} Focus ONLY on: garden size/layout, paved areas, lawn, planting, fencing, orientation, outdoor structures. State what IS there. NO poetic descriptions. 100-150 words.`,
+            living: `Write a reception rooms description for a premium property brochure.${photoContext}${propertyContext}
 
-            exterior: `Describe the EXTERIOR and GROUNDS factually and specifically.${photoContext}${propertyContext} Focus ONLY on: building facade, driveway, parking, outbuildings, boundary walls, exterior materials. State what IS visible. 100-150 words.`,
+STRUCTURE: Write 3-4 SHORT paragraphs (2-3 sentences each). Total 100-130 words MAXIMUM.
 
-            location: `Describe the LOCATION of ${propertyAddress || 'this property'} factually and specifically.${propertyContext} Focus ONLY on: specific nearby amenities (name schools, shops, stations with distances), transport links, area character. State verifiable facts. 100-150 words.`,
+Paragraph 1: Principal reception — size, fireplace, ceiling height, period features.
+Paragraph 2: Additional rooms — study, family room, drawing room, library.
+Paragraph 3: Character — flooring, windows, mouldings, views.
 
-            contact: `Write a direct invitation to arrange a viewing. Include agent contact method. NO excessive praise. 30-40 words maximum. Be professional.`
+RULES:
+- State room COUNT: "three reception rooms" not just "generous living space"
+- Name architectural features: inglenook, bay window, cornice, dado rail
+- Mention aspect and light: "south-facing", "dual-aspect", "floor-to-ceiling windows"
+- NO: "perfect for relaxation", "ideal for families", "wonderful entertaining space"`,
+
+            bedrooms: `Write a bedrooms description for a premium property brochure.${photoContext}${propertyContext}
+This property has ${beds ? beds + ' bedrooms' : 'multiple bedrooms'} and ${baths ? baths + ' bathrooms' : 'several bathrooms'}.
+
+STRUCTURE: Write 3-4 SHORT paragraphs (2-3 sentences each). Total 100-120 words MAXIMUM.
+
+Paragraph 1: Principal bedroom — size, en-suite, dressing room, views.
+Paragraph 2: Further bedrooms — how many, which floors, en-suites.
+Paragraph 3: Bathrooms — fittings quality (freestanding bath, walk-in shower, heated towel rails).
+
+RULES:
+- State EXACT bedroom count and which have en-suites
+- Describe the principal bedroom specifically, then summarise the rest
+- Mention built-in storage: "fitted wardrobes", "dressing room"
+- NO: "sanctuary", "retreat", "haven", "restful night's sleep"`,
+
+            bathrooms: `Write a bathroom description for a premium property brochure.${photoContext}${propertyContext}
+
+STRUCTURE: 2 SHORT paragraphs. Total 60-80 words MAXIMUM.
+
+Paragraph 1: Principal bathroom — bath type (freestanding/built-in), shower, fixtures.
+Paragraph 2: Additional bathrooms — count, notable features.
+
+RULES:
+- Name specific fixtures: "freestanding roll-top bath", "walk-in rainfall shower"
+- Mention materials: "marble tiling", "Porcelanosa tiles", "natural stone"
+- NO: "spa-like", "luxurious retreat", "pamper yourself"`,
+
+            garden: `Write a gardens and grounds description for a premium property brochure.${photoContext}${propertyContext}
+
+STRUCTURE: Write 3-4 SHORT paragraphs (2-3 sentences each). Total 120-160 words MAXIMUM.
+
+Paragraph 1: Overall grounds — total acreage/size, setting, approach/driveway.
+Paragraph 2: Formal gardens — lawns, borders, terraces, walled garden, kitchen garden.
+Paragraph 3: Additional features — outbuildings, garaging, annexe, swimming pool, tennis court.
+Paragraph 4 (optional): Boundaries and privacy — walls, hedging, woodland, views.
+
+RULES:
+- State EXACT acreage or dimensions if known
+- Name specific features: "walled kitchen garden", "ha-ha", "yew hedging"
+- Mention orientation: "south-facing terrace", "west-facing lawn"
+- Describe approach: "tree-lined drive", "electric gates", "gravel drive"
+- NO: "verdant paradise", "outdoor oasis", "tranquil retreat"`,
+
+            exterior: `Write an exterior description for a premium property brochure.${photoContext}${propertyContext}
+
+STRUCTURE: Write 2-3 SHORT paragraphs. Total 100-130 words MAXIMUM.
+
+Paragraph 1: Architecture — building style, period, materials (stone, brick, render), roof.
+Paragraph 2: Facade details — windows (mullioned, sash), porch, chimneys, listed features.
+Paragraph 3: Practical — parking, garaging, outbuildings.
+
+RULES:
+- Name architectural period: "Georgian", "Victorian", "Arts and Crafts", "contemporary"
+- Name materials: "Cotswold stone", "red brick", "rendered", "tile-hung"
+- Mention conservation/listed status if known
+- NO: "impressive facade", "kerb appeal", "sets the tone"`,
+
+            location: `Write a location description for a premium property brochure.${photoContext}${propertyContext}
+The address is: ${propertyAddress || 'not specified'}.
+
+STRUCTURE: Write 4-5 SHORT paragraphs (2-3 sentences each). Total 150-200 words. This text will display in two columns so keep paragraphs SHORT.
+
+Paragraph 1: Immediate setting — village/town name, character, distance from property.
+Paragraph 2: Local amenities — NAME specific schools (prep, senior), shops, restaurants.
+Paragraph 3: Transport — nearest station WITH London journey time, road connections (A-roads, motorways).
+Paragraph 4: Wider area — Area of Outstanding Natural Beauty, National Trust, countryside.
+Paragraph 5: Distances — nearest towns, London distance.
+
+RULES:
+- NAME specific schools, stations, pubs, shops — not just "excellent schools nearby"
+- State DISTANCES: "0.5 miles to Haslemere station (Waterloo 55 minutes)"
+- State journey times to London by rail
+- Mention AONB, Green Belt, National Park if applicable
+- NO: "sought-after location", "vibrant community", "perfect balance of town and country"
+- Research real facts about the area — do not make up school or station names`,
+
+            contact: `Write a brief call to action for a property brochure back page. 20-30 words maximum. Professional, direct. Example: "To arrange a private viewing or for further information, please contact our office." Do not use exclamation marks.`
         };
 
         const systemPrompt = roomPrompts[page.type] || `Write a comprehensive professional description of ${page.title}. 150-200 words in flowing paragraphs. Use sophisticated Savills tone.`;
@@ -1529,13 +1605,7 @@ function renderPages() {
         }
     }, 100);
 
-    // Make existing content draggable after rendering
-    setTimeout(() => {
-        if (window.ElementDrag && window.ElementDrag.makeContentDraggable) {
-            window.ElementDrag.makeContentDraggable();
-            console.log('🎯 Content elements made draggable');
-        }
-    }, 500);
+    // Drag/drop feature removed in cleanup
 }
 
 /**
@@ -1587,6 +1657,14 @@ function renderKnightFrankBrochure() {
         hasAgent: !!agent.name
     });
 
+    // Read custom colors from session preferences (set on index.html color pickers)
+    const prefs = sessionData.preferences || {};
+    const cc = prefs.customColors || {};
+    const brandPrimary = cc.primary || '#4A1420';
+    const brandSecondary = cc.secondary || '#C4975A';
+    const brandText = cc.text || '#3d3d3d';
+    const brandBg = cc.background || '#ffffff';
+
     // Generate the Knight Frank brochure HTML
     const brochureHTML = KnightFrankTemplate.generate({
         property: property,
@@ -1595,12 +1673,12 @@ function renderKnightFrankBrochure() {
         agent: agent
     }, {
         brand: {
-            primary: '#4A1420',
-            secondary: '#C4975A',
-            accent: '#4A1420',
-            text: '#3d3d3d',
+            primary: brandPrimary,
+            secondary: brandSecondary,
+            accent: brandPrimary,
+            text: brandText,
             textLight: '#595959',
-            background: '#ffffff',
+            background: brandBg,
             logoUrl: '/static/images/doorstep-logo.png'
         }
     });
@@ -1649,12 +1727,24 @@ function renderKnightFrankBrochure() {
             .brochure-page.summary-page { display: grid !important; grid-template-columns: 1fr 1fr !important; }
             .brochure-page.location-page { display: grid !important; grid-template-columns: 1fr !important; grid-template-rows: 0.45fr 0.55fr !important; }
             .brochure-page.property-page { display: grid !important; grid-template-columns: 1.2fr 1fr 0.8fr !important; }
-            .brochure-page.bedrooms-page-v2 { display: grid !important; grid-template-columns: 1.2fr 1fr !important; }
+            .brochure-page.bedrooms-page-v2 { display: grid !important; grid-template-columns: 1fr 1.2fr !important; }
+            .bedrooms-page-v2 .bedroom-photos.photos-2 { grid-template-columns: 1fr !important; grid-template-rows: 1fr 1fr !important; }
+            .bedrooms-page-v2 .bedroom-photos.photos-1 { grid-template-columns: 1fr !important; grid-template-rows: 1fr !important; }
             .brochure-page.floorplans-page { display: grid !important; grid-template-columns: 1fr 1fr !important; }
             .brochure-page.floorplans-page.photo-spread-page { display: grid !important; grid-template-columns: 1.4fr 1fr !important; }
             .brochure-page.gardens-page { display: grid !important; grid-template-columns: 1fr 1fr !important; }
             .brochure-page.details-page { display: grid !important; grid-template-columns: 1fr 1fr 1fr !important; }
+            .brochure-page.details-page.no-map { grid-template-columns: 1.2fr 1fr !important; }
             .brochure-page.back-cover { display: block !important; }
+            /* Ensure page footers render above grid content */
+            .brochure-page .page-footer {
+                position: absolute !important;
+                bottom: 5mm !important;
+                left: 15mm !important;
+                right: 15mm !important;
+                z-index: 50 !important;
+                background: white !important;
+            }
             /* Protect cover page overlay and content from editor interference */
             .brochure-page.cover-page .overlay {
                 position: absolute !important;
@@ -1783,15 +1873,7 @@ function renderKnightFrankBrochure() {
         }
     }, 200);
 
-    // Make content draggable
-    setTimeout(() => {
-        if (window.ElementDrag && window.ElementDrag.makeContentDraggable) {
-            window.ElementDrag.makeContentDraggable();
-            console.log('🎯 Knight Frank elements made draggable');
-        }
-    }, 500);
-
-    console.log('✅ Knight Frank brochure rendered successfully');
+    console.log('Knight Frank brochure rendered successfully');
     return true;
 }
 

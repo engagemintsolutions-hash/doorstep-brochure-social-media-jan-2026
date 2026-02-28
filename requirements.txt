@@ -21,9 +21,6 @@ Pillow==10.2.0
 reportlab==4.0.9
 qrcode[pil]==7.4.2
 
-# Parsing
-beautifulsoup4==4.12.2
-
 # Background Jobs
 apscheduler==3.10.4
 

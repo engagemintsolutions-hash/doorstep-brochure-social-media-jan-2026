@@ -633,6 +633,7 @@
     async function loadCustomTemplates() {
         try {
             const response = await fetch('/api/templates/custom?user_id=default', {
+                credentials: 'include',
                 headers: getAuthHeaders()
             });
             if (response.ok) {
@@ -667,6 +668,7 @@
         try {
             const response = await fetch('/api/templates/custom', {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                     ...getAuthHeaders()
@@ -706,6 +708,7 @@
         try {
             const response = await fetch(`/api/templates/custom/${templateId}?user_id=default`, {
                 method: 'DELETE',
+                credentials: 'include',
                 headers: getAuthHeaders()
             });
 
@@ -760,9 +763,9 @@
      * Get auth headers for API calls
      */
     function getAuthHeaders() {
-        return {
-            'Authorization': 'Basic ' + btoa('doorstep:BobLemmons123')
-        };
+        // Browser caches basic auth credentials after login dialog
+        // fetch calls should use credentials: 'include' to send them
+        return {};
     }
 
     /**

@@ -146,7 +146,7 @@ const KnightFrankTemplate = (function() {
             page-break-after: always;
         }
         /* Prevent grid children from overflowing their cells */
-        .brochure-page > * {
+        .brochure-page > *:not(.page-footer) {
             overflow: hidden;
             min-width: 0;
             min-height: 0;
@@ -166,11 +166,16 @@ const KnightFrankTemplate = (function() {
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            background: linear-gradient(transparent 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.75) 100%);
             padding: 60px 50px 40px;
         }
         .cover-page .cover-content {
             text-align: left;
+            background: rgba(0,0,0,0.15);
+            padding: 20px 30px;
+            border-radius: 8px;
+            backdrop-filter: blur(2px);
+            display: inline-block;
         }
         .cover-page .property-name {
             font-family: ${FONTS.heading};
@@ -207,13 +212,9 @@ const KnightFrankTemplate = (function() {
             position: absolute;
             top: 25px;
             right: 30px;
-            background: rgba(255,255,255,0.9);
-            padding: 8px 14px;
-            border-radius: 4px;
         }
         .cover-page .logo img {
             display: block;
-            filter: none;
         }
 
         /* Summary page - split layout */
@@ -462,10 +463,11 @@ const KnightFrankTemplate = (function() {
             color: ${brand.text};
         }
         .property-page .description {
-            font-size: 13px;
-            line-height: 1.6;
+            font-size: 12px;
+            line-height: 1.55;
             color: #333333;
             text-align: justify;
+            overflow: hidden;
         }
         .property-page .description p {
             margin-bottom: 12px;
@@ -486,7 +488,7 @@ const KnightFrankTemplate = (function() {
         /* Bedrooms page - 2 column: photos left, text right */
         .bedrooms-page-v2 {
             display: grid;
-            grid-template-columns: 1.2fr 1fr;
+            grid-template-columns: 1fr 1.2fr;
             gap: 0;
         }
         .bedrooms-page-v2 .bedroom-photos {
@@ -494,6 +496,14 @@ const KnightFrankTemplate = (function() {
             grid-template-columns: 1fr 1fr;
             grid-template-rows: 1fr 1fr;
             gap: 3px;
+        }
+        .bedrooms-page-v2 .bedroom-photos.photos-2 {
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+        .bedrooms-page-v2 .bedroom-photos.photos-1 {
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr;
         }
         .bedrooms-page-v2 .bedroom-photos .photo-container,
         .bedrooms-page-v2 .bedroom-photos img {
@@ -605,13 +615,25 @@ const KnightFrankTemplate = (function() {
         }
         .photo-spread-page .spread-sidebar h2 {
             font-family: ${FONTS.heading};
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 500;
-            padding: 20px 25px 15px;
+            padding: 12px 20px 8px;
             margin: 0;
             border-left: 4px solid ${brand.primary};
             margin-left: 15px;
             color: ${brand.text};
+            flex-shrink: 0;
+        }
+        .photo-spread-page .spread-sidebar-text {
+            font-family: ${FONTS.body};
+            font-size: 11.5px;
+            line-height: 1.6;
+            color: #555;
+            padding: 6px 20px 10px 35px;
+            flex-shrink: 0;
+        }
+        .photo-spread-page .spread-sidebar-text p {
+            margin: 0;
         }
         .photo-spread-page .spread-sidebar .photo-container {
             flex: 1;
@@ -676,6 +698,9 @@ const KnightFrankTemplate = (function() {
             grid-template-columns: 1fr 1fr 1fr;
             gap: 0;
         }
+        .details-page.no-map {
+            grid-template-columns: 1.2fr 1fr;
+        }
         .details-page .map-section {
             padding: 30px;
             background: #f9f9f9;
@@ -724,9 +749,9 @@ const KnightFrankTemplate = (function() {
             color: ${brand.textLight};
         }
         .details-page .legal-section {
-            font-size: 9px;
+            font-size: 8px;
             color: #999;
-            line-height: 1.5;
+            line-height: 1.4;
             margin-top: auto;
         }
         .details-page .info-divider {
@@ -774,14 +799,20 @@ const KnightFrankTemplate = (function() {
             left: 0;
             right: 0;
             padding: 40px 60px;
-            background: rgba(0, 51, 102, 0.92);
+            background: rgba(74, 20, 32, 0.92);
             color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         .back-cover .logo-large {
-            color: white;
+            background: rgba(255,255,255,0.95);
+            padding: 8px 12px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+        .back-cover .logo-large img {
+            display: block;
         }
         .back-cover .logo-large svg {
             height: 70px;
@@ -833,15 +864,16 @@ const KnightFrankTemplate = (function() {
         /* Page footer with page numbers */
         .page-footer {
             position: absolute;
-            bottom: 8mm;
+            bottom: 5mm;
             left: 15mm;
             right: 15mm;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: 6px;
+            padding: 4px 0 0 0;
             border-top: 1px solid ${brand.primary}33;
-            z-index: 20;
+            z-index: 50;
+            background: white;
         }
         .page-footer .footer-agent {
             font-family: ${FONTS.body};
@@ -889,7 +921,8 @@ const KnightFrankTemplate = (function() {
      * Generate Cover Page (Page 1)
      */
     function generateCoverPage(address, price, property, photos, brand) {
-        const heroPhoto = photos.exterior?.[0] || photos.aerial?.[0] || photos.all?.[0];
+        // Cover hero: strongly prefer outdoor shots — exterior, aerial, garden, view — never interior/bathroom
+        const heroPhoto = photos.exterior?.[0] || photos.aerial?.[0] || photos.garden?.[0] || photos.view?.[0] || photos.all?.[0];
         const heroUrl = heroPhoto?.url || heroPhoto?.dataUrl || '';
 
         // Build key stats for cover
@@ -913,7 +946,7 @@ const KnightFrankTemplate = (function() {
                     </div>
                 </div>
             </div>
-            <div class="logo"><img src="${brand.logoUrl || '/static/images/doorstep-logo.png'}" alt="Doorstep" style="height: 36px;"></div>
+            <div class="logo"><img src="${brand.logoWhiteUrl || '/static/images/doorstep-logo-white.png'}" alt="Doorstep" style="height: 36px;"></div>
         </div>`;
     }
 
@@ -988,7 +1021,7 @@ const KnightFrankTemplate = (function() {
         <div class="brochure-page location-page">
             <div class="location-hero">
                 <img src="${heroPhoto?.url || heroPhoto?.dataUrl || ''}" alt="Location">
-                <span class="photo-caption">${escapeHtml(heroPhoto?.description || heroPhoto?.category || '')}</span>
+                <span class="photo-caption">${escapeHtml(formatCaption(heroPhoto || {}))}</span>
             </div>
             <div class="text-section">
                 <h2>Location</h2>
@@ -1005,10 +1038,13 @@ const KnightFrankTemplate = (function() {
      */
     function generatePropertyPage(address, description, photos, brand) {
         const mainPhoto = photos.kitchen?.[0] || photos.living?.[0] || photos.interior?.[0] || photos.all?.[1];
-        // Build side photos from available interior shots, excluding the main photo
+        // Build side photos from available interior shots (including luxury features), excluding the main photo
         const candidates = [
             photos.living?.[0], photos.living?.[1], photos.reception?.[0],
-            photos.dining?.[0], photos.interior?.[0], photos.interior?.[1],
+            photos.dining?.[0], photos.orangery?.[0], photos.library?.[0],
+            photos.cinema?.[0], photos.gym?.[0], photos.wine_cellar?.[0],
+            photos.games?.[0], photos.spa?.[0],
+            photos.interior?.[0], photos.interior?.[1],
             photos.bedroom?.[0], photos.bathroom?.[0],
             photos.all?.[2], photos.all?.[3]
         ].filter(p => p && p !== mainPhoto);
@@ -1029,7 +1065,7 @@ const KnightFrankTemplate = (function() {
         <div class="brochure-page property-page">
             <div class="main-image photo-container">
                 <img src="${mainPhoto?.url || mainPhoto?.dataUrl || ''}" alt="Kitchen">
-                <span class="photo-caption">${escapeHtml(mainPhoto?.description || mainPhoto?.category || mainPhoto?.room || '')}</span>
+                <span class="photo-caption">${escapeHtml(formatCaption(mainPhoto || {}))}</span>
             </div>
             <div class="text-section">
                 <h2 data-editable="property-name">${escapeHtml(propertyName)}</h2>
@@ -1041,7 +1077,7 @@ const KnightFrankTemplate = (function() {
                 ${sidePhotos.map((photo, i) => `
                     <div class="photo-container">
                         <img src="${photo?.url || photo?.dataUrl || ''}" alt="Interior ${i + 1}">
-                        <span class="photo-caption">${escapeHtml(photo?.description || photo?.category || photo?.room || '')}</span>
+                        <span class="photo-caption">${escapeHtml(formatCaption(photo))}</span>
                     </div>
                 `).join('')}
             </div>
@@ -1053,30 +1089,28 @@ const KnightFrankTemplate = (function() {
      * Generate Bedrooms Page (Page 5) - adaptive layout based on photos available
      */
     function generateBedroomsPage(description, photos, brand) {
-        // Fill up to 4 photos: bedrooms first, then bathrooms, then any interior fallbacks
+        // Fill up to 4 photos: bedrooms first, then bathrooms only (no living/interior fallbacks — avoid irrelevant photos)
         const bedroomPhotos = [
             ...(photos.bedroom || []),
-            ...(photos.bathroom || []),
-            ...(photos.living || []),
-            ...(photos.interior || [])
+            ...(photos.bathroom || [])
         ].slice(0, 4);
 
-        // Simpler 2-column layout: photos left, text right
+        // 2-column layout: text left, photos right (flipped from page 4 for variety)
         return `
         <div class="brochure-page bedrooms-page-v2">
-            <div class="bedroom-photos">
-                ${bedroomPhotos.map((photo, i) => `
-                    <div class="photo-container">
-                        <img src="${photo?.url || photo?.dataUrl || ''}" alt="${i < (photos.bedroom?.length || 0) ? 'Bedroom' : 'Bathroom'}">
-                        <span class="photo-caption">${escapeHtml(photo?.description || photo?.category || photo?.room || '')}</span>
-                    </div>
-                `).join('')}
-            </div>
             <div class="bedroom-text">
                 <h2>Bedroom Accommodation</h2>
                 <div class="text-content" data-editable="bedroom-description">
                     ${description}
                 </div>
+            </div>
+            <div class="bedroom-photos${bedroomPhotos.length <= 2 ? ' photos-' + bedroomPhotos.length : ''}">
+                ${bedroomPhotos.map((photo, i) => `
+                    <div class="photo-container">
+                        <img src="${photo?.url || photo?.dataUrl || ''}" alt="${i < (photos.bedroom?.length || 0) ? 'Bedroom' : 'Bathroom'}">
+                        <span class="photo-caption">${escapeHtml(formatCaption(photo))}</span>
+                    </div>
+                `).join('')}
             </div>
             ${generatePageFooter(5, brand)}
         </div>`;
@@ -1091,27 +1125,43 @@ const KnightFrankTemplate = (function() {
 
         // When no floor plan, show a designed photo gallery spread
         if (!floorPlan) {
-            const allExterior = [
-                ...(photos.exterior || []),
+            // Hero = best exterior, sidebar = variety from garden/luxury outdoor features
+            const heroPhoto = photos.exterior?.[0] || photos.garden?.[0];
+            const sidePhotos = [
                 ...(photos.garden || []),
-                ...(photos.pool || [])
-            ].slice(0, 4);
-            const heroPhoto = allExterior[0];
-            const sidePhotos = allExterior.slice(1, 4);
+                ...(photos.exterior || []).slice(1),
+                ...(photos.pool || []),
+                ...(photos.tennis || []),
+                ...(photos.stables || []),
+                ...(photos.lake || []),
+                ...(photos.courtyard || []),
+                ...(photos.boathouse || []),
+                ...(photos.terrace || []),
+                ...(photos.view || [])
+            ].slice(0, 3);
             return `
             <div class="brochure-page floorplans-page photo-spread-page">
                 <div class="spread-hero">
                     <div class="photo-container">
                         <img src="${heroPhoto?.url || heroPhoto?.dataUrl || ''}" alt="Property exterior">
-                        <span class="photo-caption">${escapeHtml(heroPhoto?.description || heroPhoto?.category || heroPhoto?.room || '')}</span>
+                        <span class="photo-caption">${escapeHtml(formatCaption(heroPhoto || {}))}</span>
                     </div>
                 </div>
                 <div class="spread-sidebar">
                     <h2>Exterior &amp; Grounds</h2>
+                    <div class="spread-sidebar-text" data-editable="exterior-description">
+                        ${(() => {
+                            const features = (property.keyFeatures || '').split(',').map(f => f.trim()).filter(Boolean);
+                            const outdoor = features.filter(f => /garden|ground|acre|garage|annex|pool|terrace|drive|parking|land|heating|stone|tennis|stable|equestrian|lake|pond|paddock|meadow|orchard|woodland|courtyard|barn|boathouse|chapel/i.test(f));
+                            const highlights = outdoor.length >= 2 ? outdoor.slice(0, 4) : features.slice(0, 4);
+                            if (!highlights.length) return '';
+                            return `<p>Key features include ${highlights.map(h => h.toLowerCase()).join(', ')}.</p>`;
+                        })()}
+                    </div>
                     ${sidePhotos.map(p => `
                         <div class="photo-container">
                             <img src="${p?.url || p?.dataUrl || ''}" alt="Property">
-                            <span class="photo-caption">${escapeHtml(p?.description || p?.category || p?.room || '')}</span>
+                            <span class="photo-caption">${escapeHtml(formatCaption(p || {}))}</span>
                         </div>
                     `).join('')}
                 </div>
@@ -1158,8 +1208,8 @@ const KnightFrankTemplate = (function() {
     function generateGardensPage(description, property, photos, brand) {
         const gardenPhotos = [
             photos.exterior?.[0] || photos.garden?.[0],
-            photos.garden?.[1] || photos.exterior?.[1],
-            photos.pool?.[0] || photos.exterior?.[2],
+            photos.garden?.[1] || photos.tennis?.[0] || photos.exterior?.[1],
+            photos.pool?.[0] || photos.lake?.[0] || photos.stables?.[0] || photos.exterior?.[2],
             photos.terrace?.[0] || photos.garden?.[2]
         ].filter(Boolean).slice(0, 4);
 
@@ -1180,7 +1230,7 @@ const KnightFrankTemplate = (function() {
                 ${gardenPhotos.map((photo, i) => `
                     <div class="photo-container">
                         <img src="${photo?.url || photo?.dataUrl || ''}" alt="Garden ${i + 1}">
-                        <span class="photo-caption">${escapeHtml(photo?.description || photo?.category || photo?.room || '')}</span>
+                        <span class="photo-caption">${escapeHtml(formatCaption(photo))}</span>
                     </div>
                 `).join('')}
             </div>
@@ -1192,21 +1242,21 @@ const KnightFrankTemplate = (function() {
      * Generate Details Page (Page 8)
      */
     function generateDetailsPage(property, location, siteMap, photos, brand) {
+        // Pick scenic photos that haven't been heavily used on other pages
         const scenicPhotos = [
-            photos.view?.[0] || photos.exterior?.[3],
-            photos.garden?.[3] || photos.exterior?.[4]
+            photos.view?.[0] || photos.garden?.[1] || photos.exterior?.[1],
+            photos.garden?.[2] || photos.exterior?.[0] || photos.pool?.[0]
         ].filter(Boolean);
 
+        const hasMap = !!siteMap;
+
         return `
-        <div class="brochure-page details-page">
+        <div class="brochure-page details-page${hasMap ? '' : ' no-map'}">
+            ${hasMap ? `
             <div class="map-section">
-                ${siteMap ? `<img src="${siteMap}" alt="Site Map">` : `
-                    <div style="background: #eee; padding: 40px; text-align: center; color: #999;">
-                        <p>Site map available on request</p>
-                    </div>
-                `}
+                <img src="${siteMap}" alt="Site Map">
                 <p class="map-note">Note: "This plan is based upon the Ordnance Survey map with the sanction of the control of H.M. Stationery office. This plan is for convenience of purchasers only. Its accuracy is not guaranteed and it is expressly excluded from any contract."</p>
-            </div>
+            </div>` : ''}
             <div class="info-section">
                 <h3>Services</h3>
                 <p class="info-content" data-editable="services">${property.services || 'Mains water and electricity. Gas central heating. Mains drainage.'}</p>
@@ -1271,7 +1321,7 @@ const KnightFrankTemplate = (function() {
         <div class="brochure-page back-cover">
             ${heroUrl ? `<img src="${heroUrl}" alt="Property grounds">` : ''}
             <div class="back-cover-content">
-                <div class="logo-large"><img src="${brand.logoUrl || '/static/images/doorstep-logo.png'}" alt="Doorstep" style="height: 60px; filter: brightness(0) invert(1);"></div>
+                <div class="logo-large"><img src="${brand.logoUrl || '/static/images/doorstep-logo.png'}" alt="Doorstep" style="height: 40px;"></div>
                 <div class="contact-info">
                     <p class="office">${agent?.officeName || 'Doorstep'}</p>
                     <p>${agent?.address || ''}</p>
@@ -1693,6 +1743,100 @@ const KnightFrankTemplate = (function() {
     }
 
     /**
+     * Format photo caption - turn category codes into readable room names
+     */
+    function formatCaption(photo) {
+        // Prefer AI-generated caption or description
+        if (photo.caption && photo.caption.length > 3) return photo.caption;
+        if (photo.description && photo.description.length > 3) return photo.description;
+
+        // Format category/room name
+        const raw = photo.category || photo.room || photo.type || photo.roomType || '';
+        const labels = {
+            // Standard rooms
+            exterior: 'Exterior', garden: 'Garden', kitchen: 'Kitchen',
+            bedroom: 'Bedroom', bedrooms: 'Bedroom', bathroom: 'Bathroom', bathrooms: 'Bathroom',
+            living: 'Reception Room', living_room: 'Reception Room',
+            dining: 'Dining Room', dining_room: 'Dining Room',
+            interior: 'Interior', reception: 'Reception', hallway: 'Hallway',
+            // Outdoor
+            pool: 'Swimming Pool', terrace: 'Terrace', aerial: 'Aerial View', view: 'View',
+            // Luxury features
+            tennis: 'Tennis Court', cinema: 'Cinema Room', gym: 'Gymnasium',
+            spa: 'Spa', sauna: 'Sauna', wine_cellar: 'Wine Cellar',
+            stables: 'Stables', equestrian: 'Equestrian Facilities',
+            orangery: 'Orangery', conservatory: 'Conservatory',
+            library: 'Library', study: 'Study', office: 'Study',
+            games: 'Games Room', billiards: 'Billiards Room',
+            boot_room: 'Boot Room', utility: 'Utility Room', laundry: 'Laundry Room',
+            garage: 'Garage', barn: 'Barn', outbuilding: 'Outbuilding',
+            annexe: 'Annexe', cottage: 'Cottage', lodge: 'Lodge',
+            boathouse: 'Boathouse', lake: 'Lake', pond: 'Lake',
+            courtyard: 'Courtyard', driveway: 'Driveway',
+            chapel: 'Chapel', tower: 'Tower', turret: 'Tower',
+            cellar: 'Wine Cellar', pantry: 'Pantry', larder: 'Pantry',
+            cloakroom: 'Cloakroom', wc: 'WC',
+            balcony: 'Balcony', loggia: 'Loggia', veranda: 'Veranda',
+            snug: 'Snug', drawing: 'Drawing Room', sitting: 'Sitting Room',
+            music: 'Music Room', nursery: 'Nursery', dressing: 'Dressing Room',
+            plant: 'Plant Room', workshop: 'Workshop',
+            orchard: 'Orchard', paddock: 'Paddock', meadow: 'Meadow',
+            woodland: 'Woodland', stream: 'Stream'
+        };
+        if (labels[raw.toLowerCase()]) return labels[raw.toLowerCase()];
+
+        // Fallback: detect from filename/name
+        const name = (photo.name || photo.filename || '').toLowerCase();
+        const combined = raw.toLowerCase() + ' ' + name;
+        // Standard rooms
+        if (combined.includes('exterior') || combined.includes('front')) return 'Exterior';
+        if (combined.includes('kitchen')) return 'Kitchen';
+        if (combined.includes('bedroom') || name.includes('bed_')) return 'Bedroom';
+        if (combined.includes('bathroom') || combined.includes('ensuite')) return 'Bathroom';
+        if (combined.includes('living') || combined.includes('lounge')) return 'Reception Room';
+        if (combined.includes('dining')) return 'Dining Room';
+        // Luxury outdoor
+        if (combined.includes('tennis')) return 'Tennis Court';
+        if (combined.includes('pool') || combined.includes('swimming')) return 'Swimming Pool';
+        if (combined.includes('stable') || combined.includes('equestrian')) return 'Stables';
+        if (combined.includes('lake') || combined.includes('pond')) return 'Lake';
+        if (combined.includes('orchard')) return 'Orchard';
+        if (combined.includes('paddock') || combined.includes('meadow')) return 'Paddock';
+        if (combined.includes('courtyard')) return 'Courtyard';
+        if (combined.includes('drive')) return 'Driveway';
+        // Luxury indoor
+        if (combined.includes('cinema') || combined.includes('theatre') || combined.includes('theater')) return 'Cinema Room';
+        if (combined.includes('gym') || combined.includes('fitness')) return 'Gymnasium';
+        if (combined.includes('spa') || combined.includes('sauna') || combined.includes('steam')) return 'Spa';
+        if (combined.includes('wine') || combined.includes('cellar')) return 'Wine Cellar';
+        if (combined.includes('library')) return 'Library';
+        if (combined.includes('games') || combined.includes('billiard') || combined.includes('snooker')) return 'Games Room';
+        if (combined.includes('orangery')) return 'Orangery';
+        if (combined.includes('conservatory')) return 'Conservatory';
+        if (combined.includes('boot_room') || combined.includes('bootroom')) return 'Boot Room';
+        if (combined.includes('utility') || combined.includes('laundry')) return 'Utility Room';
+        if (combined.includes('barn')) return 'Barn';
+        if (combined.includes('annexe') || combined.includes('annex')) return 'Annexe';
+        if (combined.includes('cottage') || combined.includes('lodge')) return 'Cottage';
+        if (combined.includes('boathouse') || combined.includes('boat_house')) return 'Boathouse';
+        if (combined.includes('chapel')) return 'Chapel';
+        if (combined.includes('tower') || combined.includes('turret')) return 'Tower';
+        if (combined.includes('balcony') || combined.includes('loggia') || combined.includes('veranda')) return 'Balcony';
+        if (combined.includes('drawing')) return 'Drawing Room';
+        if (combined.includes('sitting')) return 'Sitting Room';
+        if (combined.includes('snug')) return 'Snug';
+        if (combined.includes('music')) return 'Music Room';
+        if (combined.includes('dressing')) return 'Dressing Room';
+        if (combined.includes('pantry') || combined.includes('larder')) return 'Pantry';
+        if (combined.includes('study') || combined.includes('office')) return 'Study';
+        if (combined.includes('garage')) return 'Garage';
+        if (combined.includes('garden')) return 'Garden';
+        if (combined.includes('terrace') || combined.includes('patio')) return 'Terrace';
+        if (combined.includes('aerial') || combined.includes('drone')) return 'Aerial View';
+        return '';
+    }
+
+    /**
      * Categorize photos by room type
      */
     function categorizePhotos(photos) {
@@ -1710,6 +1854,22 @@ const KnightFrankTemplate = (function() {
             terrace: [],
             reception: [],
             interior: [],
+            // Luxury features
+            tennis: [],
+            cinema: [],
+            gym: [],
+            spa: [],
+            wine_cellar: [],
+            stables: [],
+            orangery: [],
+            library: [],
+            games: [],
+            barn: [],
+            annexe: [],
+            boathouse: [],
+            lake: [],
+            courtyard: [],
+            garage: [],
             all: []
         };
 
@@ -1718,32 +1878,70 @@ const KnightFrankTemplate = (function() {
 
             const type = (photo.type || photo.category || photo.room || '').toLowerCase();
             const desc = (photo.description || photo.label || '').toLowerCase();
-            const combined = type + ' ' + desc;
+            const name = (photo.name || photo.filename || '').toLowerCase();
+            const combined = type + ' ' + desc + ' ' + name;
 
-            if (combined.includes('exterior') || combined.includes('front') || combined.includes('outside')) {
+            // Luxury outdoor features (check first — more specific than generic garden/exterior)
+            if (combined.includes('tennis')) {
+                categories.tennis.push(photo);
+            } else if (combined.includes('stable') || combined.includes('equestrian') || combined.includes('horse')) {
+                categories.stables.push(photo);
+            } else if (combined.includes('boathouse') || combined.includes('boat_house')) {
+                categories.boathouse.push(photo);
+            } else if (combined.includes('lake') || combined.includes('pond')) {
+                categories.lake.push(photo);
+            } else if (combined.includes('courtyard')) {
+                categories.courtyard.push(photo);
+            // Luxury indoor features (check before generic interior)
+            } else if (combined.includes('cinema') || combined.includes('theatre') || combined.includes('theater') || combined.includes('screening')) {
+                categories.cinema.push(photo);
+            } else if (combined.includes('gym') || combined.includes('fitness') || combined.includes('exercise')) {
+                categories.gym.push(photo);
+            } else if (combined.includes('spa') || combined.includes('sauna') || combined.includes('steam') || combined.includes('jacuzzi') || combined.includes('hot_tub') || combined.includes('hottub')) {
+                categories.spa.push(photo);
+            } else if (combined.includes('wine') || combined.includes('cellar')) {
+                categories.wine_cellar.push(photo);
+            } else if (combined.includes('library')) {
+                categories.library.push(photo);
+            } else if (combined.includes('games') || combined.includes('billiard') || combined.includes('snooker') || combined.includes('playroom')) {
+                categories.games.push(photo);
+            } else if (combined.includes('orangery') || combined.includes('conservatory') || combined.includes('sunroom')) {
+                categories.orangery.push(photo);
+            } else if (combined.includes('barn') || combined.includes('outbuilding')) {
+                categories.barn.push(photo);
+            } else if (combined.includes('annexe') || combined.includes('annex') || combined.includes('cottage') || combined.includes('lodge')) {
+                categories.annexe.push(photo);
+            } else if (combined.includes('garage') || combined.includes('carport')) {
+                categories.garage.push(photo);
+            // Standard categories
+            } else if (combined.includes('exterior') || combined.includes('front') || combined.includes('outside')) {
                 categories.exterior.push(photo);
             } else if (combined.includes('aerial') || combined.includes('drone')) {
                 categories.aerial.push(photo);
             } else if (combined.includes('view') || combined.includes('outlook')) {
                 categories.view.push(photo);
-            } else if (combined.includes('living') || combined.includes('lounge') || combined.includes('sitting')) {
+            } else if (combined.includes('living') || combined.includes('lounge') || combined.includes('sitting') || combined.includes('drawing') || combined.includes('snug') || combined.includes('music')) {
                 categories.living.push(photo);
-            } else if (combined.includes('kitchen')) {
+            } else if (combined.includes('kitchen') || combined.includes('pantry') || combined.includes('larder')) {
                 categories.kitchen.push(photo);
             } else if (combined.includes('dining')) {
                 categories.dining.push(photo);
-            } else if (combined.includes('bedroom') || combined.includes('master')) {
+            } else if (combined.includes('bedroom') || combined.includes('master') || combined.includes('nursery') || combined.includes('dressing')) {
                 categories.bedroom.push(photo);
-            } else if (combined.includes('bathroom') || combined.includes('ensuite') || combined.includes('shower')) {
+            } else if (combined.includes('bathroom') || combined.includes('ensuite') || combined.includes('shower') || combined.includes('cloakroom') || combined.includes('wc')) {
                 categories.bathroom.push(photo);
-            } else if (combined.includes('garden')) {
-                categories.garden.push(photo);
             } else if (combined.includes('pool') || combined.includes('swimming')) {
                 categories.pool.push(photo);
-            } else if (combined.includes('terrace') || combined.includes('patio')) {
+            } else if (combined.includes('garden') || combined.includes('orchard') || combined.includes('paddock') || combined.includes('meadow') || combined.includes('woodland')) {
+                categories.garden.push(photo);
+            } else if (combined.includes('terrace') || combined.includes('patio') || combined.includes('balcony') || combined.includes('loggia') || combined.includes('veranda')) {
                 categories.terrace.push(photo);
-            } else if (combined.includes('reception') || combined.includes('hall')) {
+            } else if (combined.includes('reception') || combined.includes('hall') || combined.includes('entrance') || combined.includes('foyer')) {
                 categories.reception.push(photo);
+            } else if (combined.includes('study') || combined.includes('office')) {
+                categories.reception.push(photo);
+            } else if (combined.includes('utility') || combined.includes('laundry') || combined.includes('boot')) {
+                categories.interior.push(photo);
             } else {
                 categories.interior.push(photo);
             }

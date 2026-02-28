@@ -106,21 +106,8 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Log API key status on startup (mask sensitive data)
-# Railway requires restart after adding environment variables
-logger.info("🔍 [DEBUG] Checking all environment variables...")
-all_env_vars = {k: v for k, v in os.environ.items() if 'ANTHROPIC' in k or 'API' in k}
-logger.info(f"🔍 [DEBUG] Environment variables with ANTHROPIC or API: {list(all_env_vars.keys())}")
-
-env_key = os.getenv("ANTHROPIC_API_KEY")
-if env_key:
-    logger.info(f"🔑 ANTHROPIC_API_KEY found in environment: {env_key[:15]}...{env_key[-4:]}")
+# Log API key status on startup (no sensitive data)
+if os.getenv("ANTHROPIC_API_KEY"):
+    logger.info("ANTHROPIC_API_KEY configured")
 else:
-    logger.warning("⚠️ ANTHROPIC_API_KEY not found in environment")
-    logger.info(f"🔍 [DEBUG] All env vars starting with A: {[k for k in os.environ.keys() if k.startswith('A')]}")
-
-if settings.anthropic_api_key:
-    logger.info(f"✅ Settings loaded API key: {settings.anthropic_api_key[:15]}...{settings.anthropic_api_key[-4:]}")
-else:
-    logger.warning("❌ Settings.anthropic_api_key is None")
-    logger.info(f"🔍 [DEBUG] Settings dict: {settings.model_dump()}")
+    logger.warning("ANTHROPIC_API_KEY not found in environment")

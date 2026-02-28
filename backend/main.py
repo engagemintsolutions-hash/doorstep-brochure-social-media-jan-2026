@@ -30,8 +30,6 @@ from backend.schemas import (
     HealthResponse,
     GenerateRequest,
     GenerateResponse,
-    ShrinkRequest,
-    ShrinkResponse,
     ImageAnalysisResponse,
     EnrichmentRequest,
     EnrichmentResponse,
@@ -42,7 +40,6 @@ from backend.schemas import (
     AddressLookupRequest,
     AddressLookupResponse,
     FullAddress,
-    ComplianceCheckRequest,
     ComplianceCheckResponse,
     ComplianceWarning,
     KeywordCoverageResult,
@@ -50,11 +47,7 @@ from backend.schemas import (
     UserSession,
     BrochureState,
     ShareBrochureRequest,
-    HandoffNotification,
-    PendingHandoffsResponse,
-    AcceptHandoffResponse,
     HeartbeatRequest,
-    ActiveUsersResponse,
     # Brochure session schemas
     BrochureSessionData,
     BrochureSessionResponse,
@@ -73,9 +66,6 @@ from backend.schemas import (
     QuickSocialPostRequest,
     QuickSocialPostResponse,
     SocialPostVariant,
-    # Background removal schemas
-    BackgroundRemovalRequest,
-    BackgroundRemovalResponse,
 )
 from backend.schemas_export import (
     PDFExportRequest,
@@ -84,36 +74,19 @@ from backend.schemas_export import (
     PackExportResponse,
 )
 from services.generator import Generator
-from services.rewrite_compressor import RewriteCompressor
-from services.shrink_service import ShrinkService
 from services.vision_adapter import VisionAdapter, ValidationError
 from services.claude_client import ClaudeClient
 from services.enrichment_service import EnrichmentService
 from services.cache_manager import CacheManager
-from services.epc_service import EPCService
-from services.schools_service import SchoolsService, get_schools_service
-from services.transport_service import TransportService, get_transport_service
-from services.gp_service import GPService, get_gp_service
 from services.compliance_checker import ComplianceChecker
 from services.keyword_coverage import KeywordCoverage
-from services.length_policy import LengthPolicy
 from services.export_service import ExportService
 from services.rate_limiter import GlobalRateLimiter
 from services.marketing_generator import MarketingGenerator
-from services.agency_templates import (
-    get_template_service,
-    AgencyBranding,
-    PropertyCharacter,
-    TemplateType
-)
-from services.user_profile_service import UserProfileService, UserProfile
-from services.property_autofill_service import PropertyAutofillService
 from services.brochure_session_service import BrochureSessionService
 from services.photo_scorer import get_photo_scorer
 from services.post_scheduler import start_scheduler, stop_scheduler
-from services.background_remover import get_background_remover
 from services.hashtag_service import get_hashtag_service, HashtagService
-from services.uk_brochure_generator import UKBrochureGenerator, get_brochure_generator
 from providers import VisionProvider, make_vision_client
 from providers.geocoding_client import GeocodingClient
 from providers.places_client import PlacesClient
@@ -131,9 +104,10 @@ fastapi_app = FastAPI(
 )
 
 # Add CORS middleware
+_cors_origins = os.environ.get("CORS_ORIGINS", "https://brochure-social-media-jan2026-production.up.railway.app").split(",")
 fastapi_app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -142,11 +116,18 @@ fastapi_app.add_middleware(
 # ============================================================================
 # BASIC AUTH MIDDLEWARE (Pure ASGI - works with mounted apps)
 # ============================================================================
-AUTH_USERNAME = "doorstep"
-AUTH_PASSWORD = "BobLemmons123"
+AUTH_USERNAME = os.environ.get("AUTH_USERNAME", "doorstep")
+AUTH_PASSWORD = os.environ.get("AUTH_PASSWORD", "changeme")
+
+SECURITY_HEADERS = [
+    [b"x-content-type-options", b"nosniff"],
+    [b"x-frame-options", b"DENY"],
+    [b"referrer-policy", b"strict-origin-when-cross-origin"],
+]
 
 class BasicAuthASGIMiddleware:
-    """Pure ASGI middleware that works with mounted StaticFiles."""
+    """Pure ASGI middleware that works with mounted StaticFiles.
+    Also injects security headers into every HTTP response."""
 
     def __init__(self, app):
         self.app = app
@@ -156,10 +137,17 @@ class BasicAuthASGIMiddleware:
             await self.app(scope, receive, send)
             return
 
+        # Wrapper to inject security headers into every response
+        async def send_with_security_headers(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                headers.extend(SECURITY_HEADERS)
+                message["headers"] = headers
+            await send(message)
+
         # Skip auth for health check, static files, and brochure session API
         path = scope.get("path", "")
 
-        # Skip auth for static files and specific API endpoints
         skip_auth_paths = [
             "/health",
             "/static/",
@@ -170,7 +158,7 @@ class BasicAuthASGIMiddleware:
 
         for skip_path in skip_auth_paths:
             if path.startswith(skip_path) or path == skip_path.rstrip("/"):
-                await self.app(scope, receive, send)
+                await self.app(scope, receive, send_with_security_headers)
                 return
 
         # Check for Authorization header
@@ -190,9 +178,9 @@ class BasicAuthASGIMiddleware:
                 pass
 
         if authenticated:
-            await self.app(scope, receive, send)
+            await self.app(scope, receive, send_with_security_headers)
         else:
-            # Return 401 response
+            # Return 401 response with security headers
             response_body = b"Authentication required"
             await send({
                 "type": "http.response.start",
@@ -201,7 +189,7 @@ class BasicAuthASGIMiddleware:
                     [b"content-type", b"text/plain"],
                     [b"www-authenticate", b'Basic realm="Doorstep Brochure Editor"'],
                     [b"content-length", str(len(response_body)).encode()],
-                ],
+                ] + SECURITY_HEADERS,
             })
             await send({
                 "type": "http.response.body",
@@ -315,18 +303,10 @@ except Exception as e:
 
 # Initialize services
 generator = Generator(claude_client=claude_client)
-compressor = RewriteCompressor()
 vision_adapter = VisionAdapter(
     vision_client=vision_client,
     max_size_mb=settings.vision_max_image_mb,
     allowed_types=settings.vision_allowed_types.split(",")
-)
-length_policy = LengthPolicy()
-
-# Initialize shrink service (uses Claude if available)
-shrink_service = ShrinkService(
-    claude_client=claude_client,
-    required_keywords=[kw.strip() for kw in settings.compliance_required_keywords.split(",") if kw.strip()]
 )
 
 # Initialize enrichment service
@@ -346,56 +326,6 @@ if settings.enrichment_enabled:
         logger.warning(f"Failed to initialize enrichment service: {e}")
         enrichment_service = None
 
-# Initialize EPC service
-try:
-    epc_service = EPCService()
-    if epc_service.available:
-        logger.info("EPC service initialized successfully")
-    else:
-        logger.warning("EPC service initialized but database not found")
-        epc_service = None
-except Exception as e:
-    logger.warning(f"Failed to initialize EPC service: {e}")
-    epc_service = None
-
-# Initialize Schools service (with Ofsted ratings)
-try:
-    schools_service = get_schools_service()
-    if schools_service.available:
-        logger.info("Schools service initialized successfully")
-    else:
-        logger.warning("Schools service initialized but database not found")
-        logger.info("Run 'python scripts/download_schools_data.py' to download school data")
-        schools_service = None
-except Exception as e:
-    logger.warning(f"Failed to initialize schools service: {e}")
-    schools_service = None
-
-# Initialize Transport service (NaPTAN data from DfT)
-try:
-    transport_service = get_transport_service()
-    if transport_service.available:
-        logger.info("Transport service initialized (NaPTAN - DfT)")
-    else:
-        logger.warning("Transport service initialized but database not found")
-        logger.info("Run 'python scripts/download_naptan_data.py' to download transport data")
-        transport_service = None
-except Exception as e:
-    logger.warning(f"Failed to initialize transport service: {e}")
-    transport_service = None
-
-# Initialize GP service (NHS Digital data)
-try:
-    gp_service = get_gp_service()
-    if gp_service.available:
-        logger.info("GP service initialized (NHS Digital)")
-    else:
-        logger.warning("GP service initialized but database not found")
-        logger.info("Run 'python scripts/download_gp_data.py' to download GP data")
-        gp_service = None
-except Exception as e:
-    logger.warning(f"Failed to initialize GP service: {e}")
-    gp_service = None
 
 # Initialize address lookup client (Ideal Postcodes)
 address_lookup_client = None
@@ -435,14 +365,6 @@ except Exception as e:
     logger.warning(f"Failed to initialize export service: {e}")
     export_service = None
 
-# Initialize agency template service
-try:
-    template_service = get_template_service()
-    logger.info(f"Agency template service initialized with {len(template_service.list_agencies())} agencies")
-except Exception as e:
-    logger.warning(f"Failed to initialize agency template service: {e}")
-    template_service = None
-
 # Initialize marketing generator
 try:
     marketing_generator = MarketingGenerator(claude_client=claude_client)
@@ -450,30 +372,6 @@ try:
 except Exception as e:
     logger.warning(f"Failed to initialize marketing generator: {e}")
     marketing_generator = None
-
-# Initialize UK brochure generator
-try:
-    uk_brochure_generator = get_brochure_generator(claude_client=claude_client)
-    logger.info("UK brochure generator initialized")
-except Exception as e:
-    logger.warning(f"Failed to initialize UK brochure generator: {e}")
-    uk_brochure_generator = None
-
-# Initialize user profile service
-try:
-    user_profile_service = UserProfileService(storage_dir="./user_profiles")
-    logger.info("User profile service initialized")
-except Exception as e:
-    logger.warning(f"Failed to initialize user profile service: {e}")
-    user_profile_service = None
-
-# Initialize property autofill service
-try:
-    property_autofill_service = PropertyAutofillService()
-    logger.info("Property autofill service initialized")
-except Exception as e:
-    logger.warning(f"Failed to initialize property autofill service: {e}")
-    property_autofill_service = None
 
 # Initialize brochure session service
 try:
@@ -513,13 +411,7 @@ async def root():
 
 @fastapi_app.get("/health", response_model=HealthResponse)
 async def health_check():
-    """
-    Health check endpoint.
-
-    Returns:
-        HealthResponse: Service status and version.
-    """
-    logger.info("Health check requested")
+    """Health check endpoint."""
     return HealthResponse(status="ok", version="1.0.0")
 
 
@@ -796,154 +688,6 @@ Remember: Lead with facts, not feelings. Specific details, not vague praise."""
         raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
 
 
-@fastapi_app.post("/generate/fast", response_model=GenerateResponse)
-async def generate_listing_fast(request: GenerateRequest):
-    """
-    FAST generation endpoint for brochure editor - generates only 1 variant, no compliance.
-
-    Args:
-        request: GenerateRequest with property data, location, audience, tone, channel
-
-    Returns:
-        GenerateResponse: Single generated variant with metadata
-
-    Raises:
-        HTTPException: If generation fails
-    """
-    logger.info(f"FAST generate request for {request.property_data.property_type} property")
-
-    try:
-        # Generate ONLY 1 variant for speed
-        variants = await generator.generate_variants(
-            request,
-            num_variants=1,
-            enrichment_data=None,  # No enrichment for speed
-            photo_analysis=request.photo_analysis,
-            brochure_sections=request.brochure_sections
-        )
-
-        metadata = {
-            "channel": request.channel.channel.value,
-            "tone": request.tone.tone.value,
-            "target_words": request.channel.target_words,
-            "hard_cap": request.channel.hard_cap,
-            "enrichment_used": False,
-            "fast_mode": True,
-            "target_ranges": {
-                "headline_chars": [50, 90],
-                "full_text_words": [
-                    request.channel.target_words or 150,
-                    request.channel.hard_cap or 300
-                ] if request.channel.target_words else [150, 300],
-                "features_count": [6, 10]
-            }
-        }
-
-        return GenerateResponse(
-            variants=variants,
-            metadata=metadata,
-            compliance=None  # No compliance check in fast mode
-        )
-
-    except Exception as e:
-        logger.error(f"Fast generation failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Fast generation failed: {str(e)}")
-
-
-@fastapi_app.post("/generate/uk-brochure")
-async def generate_uk_brochure(request: dict):
-    """
-    Generate a UK-style property brochure with proper sections.
-
-    Follows the standard UK estate agent format used by Savills, Knight Frank, etc:
-    - Opening Summary
-    - The Situation (location, transport, schools, amenities)
-    - The Accommodation (room-by-room narrative with flow)
-    - Outside (gardens, parking, external features)
-    - Services (EPC, council tax, tenure)
-
-    Request body:
-    {
-        "property_data": {
-            "bedrooms": 4,
-            "bathrooms": 2,
-            "property_type": "detached house",
-            "features": ["garden", "garage", "period features"],
-            "epc_rating": "C",
-            "size_sqft": 2500,
-            "price": "850000"
-        },
-        "location_data": {
-            "address": "123 Example Road, London",
-            "postcode": "SW1A 1AA",
-            "setting": "suburban"
-        },
-        "photo_analysis": [...],  // Optional: vision analysis results
-        "enrichment_data": {...},  // Optional: location enrichment
-        "tone": "premium"  // basic, premium, or boutique
-    }
-
-    Returns:
-    {
-        "property_name": "4 Bedroom Detached House",
-        "address": "123 Example Road, London",
-        "price": "850000",
-        "sections": {
-            "opening_summary": "...",
-            "situation": "...",
-            "accommodation": "...",
-            "outside": "...",
-            "services": "..."
-        },
-        "in_brief": ["...", "..."],
-        "full_text": "Complete brochure narrative",
-        "word_count": 650
-    }
-    """
-    print("=== UK BROCHURE REQUEST RECEIVED ===", flush=True)
-    logger.info("UK brochure generation request received")
-
-    if not uk_brochure_generator:
-        raise HTTPException(
-            status_code=503,
-            detail="UK brochure generator not available"
-        )
-
-    try:
-        property_data = request.get("property_data", {})
-        location_data = request.get("location_data", {})
-        photo_analysis = request.get("photo_analysis", [])
-        enrichment_data = request.get("enrichment_data", {})
-        tone = request.get("tone", "premium")
-
-        # Validate required fields
-        if not property_data:
-            raise HTTPException(
-                status_code=400,
-                detail="property_data is required"
-            )
-
-        # Generate the brochure
-        brochure = await uk_brochure_generator.generate_brochure(
-            property_data=property_data,
-            location_data=location_data,
-            photo_analysis=photo_analysis,
-            enrichment_data=enrichment_data,
-            tone=tone
-        )
-
-        logger.info(f"UK brochure generated: {brochure.property_name}, {len(brochure.get_full_narrative().split())} words")
-
-        return brochure.to_dict()
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"UK brochure generation failed: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"UK brochure generation failed: {str(e)}"
-        )
 
 
 @fastapi_app.post("/enrich", response_model=EnrichmentResponse)
@@ -1107,117 +851,6 @@ async def lookup_address(request: AddressLookupRequest):
         raise HTTPException(status_code=500, detail=f"Address lookup failed: {str(e)}")
 
 
-@fastapi_app.post("/compliance/check", response_model=ComplianceCheckResponse)
-async def check_compliance(request: ComplianceCheckRequest):
-    """
-    Check property listing text for compliance and keyword coverage.
-    
-    Args:
-        request: ComplianceCheckRequest with text, channel, and optional property data
-        
-    Returns:
-        ComplianceCheckResponse: Compliance analysis with warnings and keyword coverage
-        
-    Raises:
-        HTTPException: If compliance check fails
-    """
-    logger.info(f"Compliance check request for {request.channel} channel")
-    
-    try:
-        # Convert property_data to dict if provided
-        property_data_dict = None
-        if request.property_data:
-            property_data_dict = {
-                "property_type": request.property_data.property_type.value,
-                "bedrooms": request.property_data.bedrooms,
-                "bathrooms": request.property_data.bathrooms,
-                "epc_rating": request.property_data.epc_rating,
-                "features": request.property_data.features,
-            }
-        
-        # Run compliance check
-        compliance_result = compliance_checker.check_compliance(
-            text=request.text,
-            channel=request.channel,
-            property_data=property_data_dict
-        )
-        
-        # Run keyword coverage analysis
-        property_features = request.property_data.features if request.property_data else None
-        keyword_result = keyword_coverage.analyze_coverage(
-            text=request.text,
-            channel=request.channel,
-            property_features=property_features
-        )
-        
-        # Convert warnings to ComplianceWarning objects
-        warnings = [
-            ComplianceWarning(
-                severity=w["severity"],
-                message=w["message"],
-                suggestion=w.get("suggestion")
-            )
-            for w in compliance_result["warnings"]
-        ]
-        
-        # Create keyword coverage result
-        keyword_coverage_result = KeywordCoverageResult(
-            covered_keywords=keyword_result["covered_keywords"],
-            missing_keywords=keyword_result["missing_keywords"],
-            coverage_score=keyword_result["coverage_score"],
-            suggestions=keyword_result["suggestions"]
-        )
-        
-        # Combine suggestions
-        all_suggestions = list(set(
-            compliance_result["suggestions"] + keyword_result["suggestions"]
-        ))[:5]  # Limit to 5
-        
-        return ComplianceCheckResponse(
-            compliant=compliance_result["compliant"],
-            warnings=warnings,
-            compliance_score=compliance_result["score"],
-            keyword_coverage=keyword_coverage_result,
-            suggestions=all_suggestions
-        )
-        
-    except Exception as e:
-        logger.error(f"Compliance check failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Compliance check failed: {str(e)}")
-
-
-@fastapi_app.post("/shrink", response_model=ShrinkResponse)
-async def shrink_text(request: ShrinkRequest):
-    """
-    Compress text to target word count while preserving tone and keywords.
-    
-    Args:
-        request: ShrinkRequest with text, target word count, optional tone/channel, and keywords
-        
-    Returns:
-        ShrinkResponse: Compressed text with metrics
-        
-    Raises:
-        HTTPException: If compression fails
-    """
-    logger.info(f"Shrink request: target {request.target_words} words, tone={request.tone}, channel={request.channel}")
-    
-    if not settings.shrink_enabled:
-        raise HTTPException(status_code=503, detail="Shrink feature is disabled")
-    
-    try:
-        result = await shrink_service.compress(
-            text=request.text,
-            target_words=request.target_words,
-            tone=request.tone,
-            channel=request.channel,
-            preserve_keywords=request.preserve_keywords
-        )
-        return result
-        
-    except Exception as e:
-        logger.error(f"Compression failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Compression failed: {str(e)}")
 
 
 @fastapi_app.post("/analyze-images")
@@ -1240,10 +873,13 @@ async def analyze_images(files: List[UploadFile] = File(...)):
         raise HTTPException(status_code=422, detail="No files provided")
     
     try:
+        max_bytes = settings.vision_max_image_mb * 1024 * 1024
         results = []
         for file in files:
-            # Read file content
+            # Read file content with size limit
             content = await file.read()
+            if len(content) > max_bytes:
+                raise HTTPException(status_code=413, detail=f"{file.filename}: exceeds {settings.vision_max_image_mb}MB limit")
 
             try:
                 # Analyze image (rate limiting handled by GlobalRateLimiter in vision client)
@@ -1266,52 +902,6 @@ async def analyze_images(files: List[UploadFile] = File(...)):
         raise HTTPException(status_code=500, detail=f"Image analysis failed: {str(e)}")
 
 
-@fastapi_app.post("/api/remove-background", response_model=BackgroundRemovalResponse)
-async def remove_background(request: BackgroundRemovalRequest):
-    """
-    Remove background from an image using AI.
-
-    Uses rembg (U2Net deep learning model) to automatically detect and remove
-    backgrounds from property photos. Returns a PNG with transparent background.
-
-    Args:
-        request: BackgroundRemovalRequest with base64 encoded image
-
-    Returns:
-        BackgroundRemovalResponse: PNG image with transparent background
-
-    Raises:
-        HTTPException: If background removal fails
-    """
-    logger.info("Background removal request received")
-
-    try:
-        # Get background remover service
-        bg_remover = get_background_remover()
-
-        # Process the image
-        result_base64, metadata = bg_remover.remove_background(
-            image_base64=request.image,
-            alpha_matting=request.alpha_matting,
-            foreground_threshold=request.foreground_threshold,
-            background_threshold=request.background_threshold
-        )
-
-        return BackgroundRemovalResponse(
-            success=True,
-            image=result_base64,
-            original_size=list(metadata['original_size']),
-            processed_size=list(metadata['processed_size']),
-            was_resized=metadata['was_resized']
-        )
-
-    except RuntimeError as e:
-        # Service not available (rembg not installed)
-        logger.error(f"Background removal service error: {e}")
-        raise HTTPException(status_code=503, detail=str(e))
-    except Exception as e:
-        logger.error(f"Background removal failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Background removal failed: {str(e)}")
 
 
 @fastapi_app.post("/export/pdf", response_model=ExportResponse)
@@ -1816,254 +1406,8 @@ async def export_brochure_pdf(request: dict):
         raise HTTPException(status_code=500, detail=f"Brochure PDF export failed: {str(e)}")
 
 
-# ============================================================================
-# NEW ENDPOINTS: Content Generators + Usage Tracking + Brand Profiles
-# ============================================================================
-
-from services.usage_tracker import UsageTracker
-from services.content_generators import (
-    RightmoveGenerator,
-    SocialMediaGenerator,
-    EmailCampaignGenerator
-)
-from services.brand_profiles import BrandProfileManager, get_brand_profile
-
-# Initialize new services
-usage_tracker = UsageTracker()
-rightmove_gen = RightmoveGenerator(claude_client)
-social_gen = SocialMediaGenerator(claude_client)
-email_gen = EmailCampaignGenerator(claude_client)
-brand_manager = BrandProfileManager()
-
-logger.info("Initialized content generators and usage tracking")
 
 
-@fastapi_app.get("/usage/check")
-async def check_usage(user_email: str):
-    """
-    Check user's free trial / subscription status.
-
-    Args:
-        user_email: User email address
-
-    Returns:
-        Usage data and trial status
-    """
-    try:
-        usage_data = usage_tracker.get_user_usage(user_email)
-        can_create, message = usage_tracker.can_create_brochure(user_email)
-
-        return {
-            "user_email": user_email,
-            "can_create_brochure": can_create,
-            "message": message,
-            "usage": usage_data
-        }
-
-    except Exception as e:
-        logger.error(f"Usage check failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/usage/stats")
-async def get_usage_stats():
-    """
-    Get overall usage statistics (admin endpoint).
-
-    Returns:
-        Total users, brochures, etc.
-    """
-    try:
-        stats = usage_tracker.get_stats()
-        return stats
-
-    except Exception as e:
-        logger.error(f"Stats retrieval failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/usage/deduct")
-async def deduct_credits(request: dict):
-    """
-    Deduct credits from user account.
-
-    Args:
-        request: {
-            "user_email": str,
-            "credits": float,
-            "action": str,
-            "metadata": dict (optional)
-        }
-
-    Returns:
-        Updated usage data
-    """
-    try:
-        user_email = request.get("user_email")
-        credits = request.get("credits", 0)
-        action = request.get("action", "unknown")
-        metadata = request.get("metadata", {})
-
-        if not user_email:
-            raise HTTPException(status_code=400, detail="user_email is required")
-
-        # For now, just log the deduction (implement actual credit system later)
-        logger.info(f"Credits deducted: {user_email} - {credits} credits for {action}")
-        logger.info(f"Metadata: {metadata}")
-
-        # Get user usage
-        usage_data = usage_tracker.get_user_usage(user_email)
-
-        return {
-            "success": True,
-            "message": f"{credits} credits deducted for {action}",
-            "usage": usage_data
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Credit deduction failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/usage/reward")
-async def reward_credits(request: dict):
-    """
-    Reward credits to user for constructive feedback.
-
-    Args:
-        request: {
-            "user_email": str,
-            "credits": float,
-            "reason": str,
-            "feedback": str
-        }
-
-    Returns:
-        Updated usage data with reward confirmation
-    """
-    try:
-        user_email = request.get("user_email")
-        credits = request.get("credits", 0)
-        reason = request.get("reason", "feedback")
-        feedback = request.get("feedback", "")
-
-        if not user_email:
-            raise HTTPException(status_code=400, detail="user_email is required")
-
-        # Log the reward for machine learning
-        logger.info(f"✨ Credits rewarded: {user_email} + {credits} credits for {reason}")
-        logger.info(f"Feedback for ML: {feedback}")
-
-        # Get user usage
-        usage_data = usage_tracker.get_user_usage(user_email)
-
-        return {
-            "success": True,
-            "message": f"🎉 You earned {credits} credits for providing valuable feedback!",
-            "credits_rewarded": credits,
-            "reason": reason,
-            "usage": usage_data
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Credit reward failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/api/ai-command")
-async def process_ai_command(request: dict):
-    """
-    Process natural language AI commands for brochure editing.
-
-    Args:
-        request: {
-            "command": str,
-            "pageContext": {
-                "pageIndex": int,
-                "pageTitle": str,
-                "pageType": str,
-                "photosCount": int,
-                "contentBlocks": list
-            },
-            "fullState": dict
-        }
-
-    Returns:
-        {
-            "message": str,
-            "changes": dict (optional)
-        }
-    """
-    try:
-        command = request.get("command", "").lower().strip()
-        page_context = request.get("pageContext", {})
-        full_state = request.get("fullState", {})
-
-        if not command:
-            raise HTTPException(status_code=400, detail="command is required")
-
-        logger.info(f"🤖 AI Command: '{command}' on page {page_context.get('pageIndex', 0)} ({page_context.get('pageTitle', 'Unknown')})")
-
-        # Parse command and generate response
-        # Simple pattern matching for now (can be replaced with Claude API for NLP)
-
-        changes = {}
-        message = ""
-
-        # Change title
-        if "change" in command and "title" in command:
-            # Extract new title (simple parsing - improve with Claude API)
-            if "to " in command:
-                new_title = command.split("to ", 1)[1].strip().strip('"\'')
-                changes["title"] = new_title.title()
-                message = f"✓ Changed title to '{changes['title']}'"
-
-        # Remove photo
-        elif "remove" in command and ("photo" in command or "image" in command):
-            if "first" in command or "1" in command:
-                changes["removePhoto"] = 0
-                message = "✓ Removed first photo from page"
-            elif "last" in command:
-                changes["removePhoto"] = page_context.get("photosCount", 1) - 1
-                message = "✓ Removed last photo from page"
-            else:
-                changes["removePhoto"] = 0
-                message = "✓ Removed photo from page"
-
-        # Add feature
-        elif "add" in command and "feature" in command:
-            if "about " in command:
-                feature_text = command.split("about ", 1)[1].strip().strip('"\'')
-                changes["addContent"] = {
-                    "type": "feature",
-                    "text": feature_text
-                }
-                message = f"✓ Added feature: '{feature_text}'"
-
-        # Rewrite section
-        elif "rewrite" in command or "change" in command:
-            message = "🤖 I'll rewrite that section. This feature uses AI text generation and will be implemented soon."
-
-        # Default response
-        else:
-            message = f"🤖 I understood: '{command}'. This is a new command pattern - I'll learn from it!"
-
-        return {
-            "message": message,
-            "changes": changes if changes else None
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"AI command processing failed: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"AI command failed: {str(e)}")
 
 
 @fastapi_app.post("/api/transform-text", response_model=TextTransformResponse)
@@ -2427,574 +1771,14 @@ KEY_FEATURES:
         raise HTTPException(status_code=500, detail=f"Repurpose failed: {str(e)}")
 
 
-@fastapi_app.post("/content/rightmove")
-async def generate_rightmove_description(request: dict):
-    """
-    Generate Rightmove-optimized description (80 words max).
 
-    Args:
-        request: {
-            "property_data": {...},
-            "location_data": {...},
-            "main_description": "...",  # optional
-            "brand_profile_id": "savills"  # optional
-        }
 
-    Returns:
-        {"description": "80-word Rightmove description"}
-    """
-    try:
-        property_data = request.get("property_data", {})
-        location_data = request.get("location_data", {})
-        main_description = request.get("main_description")
-        brand_profile_id = request.get("brand_profile_id", "generic")
 
-        brand_profile = get_brand_profile(brand_profile_id)
 
-        description = await rightmove_gen.generate(
-            property_data=property_data,
-            location_data=location_data,
-            main_description=main_description,
-            brand_profile=brand_profile
-        )
 
-        return {
-            "description": description,
-            "word_count": len(description.split()),
-            "character_count": len(description)
-        }
 
-    except Exception as e:
-        logger.error(f"Rightmove generation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
-@fastapi_app.post("/content/social-media")
-async def generate_social_media_content(request: dict):
-    """
-    Generate social media posts (Instagram + Facebook).
-
-    Args:
-        request: {
-            "property_data": {...},
-            "location_data": {...},
-            "platforms": ["instagram", "facebook"]  # optional
-        }
-
-    Returns:
-        {
-            "instagram": [{caption, hashtags, cta}, ...],
-            "facebook": [{post_text, cta}, ...]
-        }
-    """
-    try:
-        property_data = request.get("property_data", {})
-        location_data = request.get("location_data", {})
-        platforms = request.get("platforms", ["instagram", "facebook"])
-
-        result = {}
-
-        if "instagram" in platforms:
-            instagram_posts = await social_gen.generate_instagram_posts(
-                property_data=property_data,
-                location_data=location_data,
-                num_variants=3
-            )
-            result["instagram"] = instagram_posts
-
-        if "facebook" in platforms:
-            facebook_posts = await social_gen.generate_facebook_posts(
-                property_data=property_data,
-                location_data=location_data,
-                num_variants=3
-            )
-            result["facebook"] = facebook_posts
-
-        return result
-
-    except Exception as e:
-        logger.error(f"Social media generation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/content/email-campaign")
-async def generate_email_campaign(request: dict):
-    """
-    Generate "Just Listed" email campaign.
-
-    Args:
-        request: {
-            "property_data": {...},
-            "location_data": {...},
-            "agent_details": {...}  # optional
-        }
-
-    Returns:
-        {
-            "subject": "...",
-            "preview_text": "...",
-            "body_html": "...",
-            "body_text": "...",
-            "cta": "..."
-        }
-    """
-    try:
-        property_data = request.get("property_data", {})
-        location_data = request.get("location_data", {})
-        agent_details = request.get("agent_details")
-
-        email = await email_gen.generate_just_listed_email(
-            property_data=property_data,
-            location_data=location_data,
-            agent_details=agent_details
-        )
-
-        return email
-
-    except Exception as e:
-        logger.error(f"Email generation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/brand-profiles")
-async def list_brand_profiles():
-    """
-    List all available brand profiles (Savills, generic, etc.).
-
-    Returns:
-        List of brand profiles
-    """
-    try:
-        profiles = brand_manager.list_profiles()
-        return {"profiles": profiles}
-
-    except Exception as e:
-        logger.error(f"Profile listing failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/brand-profiles/{profile_id}")
-async def get_brand_profile_details(profile_id: str):
-    """
-    Get details of a specific brand profile.
-
-    Args:
-        profile_id: e.g., "savills", "generic"
-
-    Returns:
-        Complete brand profile configuration
-    """
-    try:
-        profile = get_brand_profile(profile_id)
-
-        if not profile:
-            raise HTTPException(status_code=404, detail=f"Profile not found: {profile_id}")
-
-        return {
-            "profile_id": profile.profile_id,
-            "name": profile.name,
-            "colors": profile.get_colors(),
-            "fonts": profile.get_fonts(),
-            "layout": profile.get_layout_preferences(),
-            "tone": profile.get_tone_preferences(),
-            "logo_url": profile.get_logo_url()
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Profile retrieval failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# ============================================================================
-# AUTH SYSTEM: Multi-Tenant Portal for Savills Demo
-# ============================================================================
-
-from services.auth_system import AuthSystem, get_auth_system
-
-# Initialize auth system
-auth_system_instance = get_auth_system()
-
-logger.info("Initialized auth system with Savills demo data")
-
-
-@fastapi_app.get("/auth/organizations")
-async def list_organizations():
-    """
-    List all organizations (e.g., Savills, Independent Agency).
-
-    Returns:
-        List of organizations with office counts
-    """
-    try:
-        orgs = auth_system_instance.get_organizations()
-        return {"organizations": orgs}
-
-    except Exception as e:
-        logger.error(f"Failed to list organizations: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/auth/offices/{org_id}")
-async def list_offices(org_id: str):
-    """
-    List offices for an organization.
-
-    Args:
-        org_id: Organization ID (e.g., "savills")
-
-    Returns:
-        List of offices for the organization
-    """
-    try:
-        offices = auth_system_instance.get_offices(org_id)
-        return {"org_id": org_id, "offices": offices}
-
-    except Exception as e:
-        logger.error(f"Failed to list offices: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/auth/login")
-async def authenticate_office(request: dict):
-    """
-    Authenticate access to an office using PIN.
-
-    Args:
-        request: {
-            "org_id": "savills",
-            "office_id": "savills_london",
-            "pin": "2025",
-            "user_email": "james.smith@savills.com"
-        }
-
-    Returns:
-        Authentication result with office data
-    """
-    try:
-        org_id = request.get("org_id")
-        office_id = request.get("office_id")
-        pin = request.get("pin")
-        user_email = request.get("user_email")
-
-        if not all([org_id, office_id, pin, user_email]):
-            raise HTTPException(status_code=400, detail="Missing required fields")
-
-        # Authenticate office PIN
-        success, message = auth_system_instance.authenticate_office(org_id, office_id, pin)
-
-        if not success:
-            raise HTTPException(status_code=401, detail=message)
-
-        # Get user data
-        user = auth_system_instance.get_user(user_email)
-
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        if user["office_id"] != office_id:
-            raise HTTPException(status_code=403, detail="User not authorized for this office")
-
-        # Get office stats
-        stats = auth_system_instance.get_office_stats(office_id)
-
-        return {
-            "success": True,
-            "message": "Authentication successful",
-            "user": user,
-            "office": {
-                "office_id": office_id,
-                "org_id": org_id
-            },
-            "stats": stats
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Authentication failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/office/brochures/{office_id}")
-async def get_office_brochures(office_id: str):
-    """
-    Get all brochures for an office (shared library).
-
-    All team members can see these.
-
-    Args:
-        office_id: Office ID (e.g., "savills_london")
-
-    Returns:
-        List of brochures
-    """
-    try:
-        brochures = auth_system_instance.get_office_brochures(office_id)
-
-        return {
-            "office_id": office_id,
-            "brochures": brochures,
-            "count": len(brochures)
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to retrieve brochures: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/office/brochures/{office_id}")
-async def add_office_brochure(office_id: str, request: dict):
-    """
-    Add a brochure to the office's shared library.
-
-    Args:
-        office_id: Office ID
-        request: Brochure metadata
-
-    Returns:
-        Success confirmation
-    """
-    try:
-        auth_system_instance.add_brochure_to_office(office_id, request)
-
-        return {
-            "success": True,
-            "message": "Brochure added to office library",
-            "office_id": office_id
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to add brochure: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/office/photographer-uploads/{office_id}")
-async def get_photographer_uploads(office_id: str):
-    """
-    Get pending photographer uploads for an office.
-
-    Photographers upload photos, agents assign properties and create brochures.
-
-    Args:
-        office_id: Office ID
-
-    Returns:
-        List of pending photo uploads
-    """
-    try:
-        uploads = auth_system_instance.get_photographer_uploads(office_id)
-
-        return {
-            "office_id": office_id,
-            "uploads": uploads,
-            "count": len(uploads)
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to retrieve uploads: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/office/photographer-uploads/{office_id}")
-async def add_photographer_upload(office_id: str, request: dict):
-    """
-    Add photographer upload batch.
-
-    Args:
-        office_id: Office ID
-        request: Upload metadata with photos
-
-    Returns:
-        Success confirmation
-    """
-    try:
-        auth_system_instance.add_photographer_upload(office_id, request)
-
-        return {
-            "success": True,
-            "message": "Photos uploaded successfully",
-            "office_id": office_id
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to upload photos: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/office/stats/{office_id}")
-async def get_office_statistics(office_id: str):
-    """
-    Get statistics for an office.
-
-    Args:
-        office_id: Office ID
-
-    Returns:
-        Office statistics
-    """
-    try:
-        stats = auth_system_instance.get_office_stats(office_id)
-
-        return {
-            "office_id": office_id,
-            "stats": stats
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to retrieve stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# ============================================================================
-# PHOTOGRAPHER PORTAL: Photo Upload and Assignment
-# ============================================================================
-
-from fastapi import Form
-import os
-from datetime import datetime
-
-@fastapi_app.post("/photographer/upload")
-async def upload_photographer_photos(
-    property_name: str = Form(...),
-    agent_email: str = Form(...),
-    photographer_email: str = Form(...),
-    photographer_name: str = Form(...),
-    office_id: str = Form(...),
-    photos: List[UploadFile] = File(...)
-):
-    """
-    Handle photographer photo uploads.
-
-    Photographer uploads photos for a property and assigns to an agent.
-    Photos are saved to /uploads/{office_id}/{property_name}/
-
-    Args:
-        property_name: Property name (e.g., "Avenue Road")
-        agent_email: Agent to assign photos to
-        photographer_email: Email of photographer
-        office_id: Office ID (e.g., "savills_london")
-        photos: List of image files
-
-    Returns:
-        Success confirmation with upload_id
-    """
-    try:
-        # Sanitize property name for filesystem
-        # Remove invalid characters and strip whitespace
-        safe_property_name = property_name.strip()
-        # Remove/replace invalid Windows path characters: \ / : * ? " < > |
-        invalid_chars = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
-        for char in invalid_chars:
-            safe_property_name = safe_property_name.replace(char, '-')
-        # Remove any trailing/leading dots or spaces (Windows doesn't like these)
-        safe_property_name = safe_property_name.strip('. ')
-        # Replace multiple spaces with single space
-        import re
-        safe_property_name = re.sub(r'\s+', ' ', safe_property_name)
-
-        logger.info(f"📸 Photographer upload: {safe_property_name} ({len(photos)} photos) → {agent_email}")
-
-        # Create upload directory using absolute path construction
-        base_dir = os.path.abspath("uploads")
-        upload_dir = os.path.join(base_dir, office_id, safe_property_name)
-
-        logger.info(f"Creating directory: {upload_dir}")
-        os.makedirs(upload_dir, exist_ok=True)
-
-        # Save photos
-        photo_paths = []
-        for photo in photos:
-            # Generate safe filename
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            safe_filename = f"{timestamp}_{photo.filename}"
-            photo_path = os.path.join(upload_dir, safe_filename)
-
-            logger.info(f"Saving to: {photo_path}")
-
-            # Save file
-            with open(photo_path, "wb") as f:
-                content = await photo.read()
-                f.write(content)
-
-            # Store relative path (use forward slashes for URLs)
-            photo_paths.append(f"/uploads/{office_id}/{safe_property_name}/{safe_filename}")
-            logger.info(f"  ✓ Saved: {safe_filename}")
-
-        # Create upload record in auth system
-        upload_data = {
-            "property_name": safe_property_name,
-            "agent_email": agent_email,
-            "uploaded_by": photographer_email,
-            "photographer_name": photographer_name,
-            "photo_count": len(photos),
-            "photos": photo_paths
-        }
-
-        auth_system_instance.add_photographer_upload(office_id, upload_data)
-
-        logger.info(f"✅ Upload complete: {len(photos)} photos saved for {safe_property_name}")
-
-        return {
-            "success": True,
-            "message": f"Successfully uploaded {len(photos)} photos",
-            "property_name": safe_property_name,
-            "photo_count": len(photos),
-            "agent_email": agent_email
-        }
-
-    except Exception as e:
-        logger.error(f"❌ Photographer upload failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
-
-
-@fastapi_app.get("/photographer/uploads")
-async def get_photographer_upload_history(photographer_email: str):
-    """
-    Get upload history for a photographer.
-
-    Args:
-        photographer_email: Email of photographer
-
-    Returns:
-        List of uploads by this photographer
-    """
-    try:
-        logger.info(f"Fetching upload history for {photographer_email}")
-
-        # Get all uploads across all offices (filter by photographer)
-        # For now, we'll check savills_london office
-        # TODO: Make this work across all offices the photographer has access to
-
-        data = auth_system_instance._load_data()
-        all_uploads = []
-
-        for office_id, uploads in data.get("photographer_uploads", {}).items():
-            for upload in uploads:
-                if upload.get("uploaded_by") == photographer_email:
-                    all_uploads.append({
-                        "upload_id": upload.get("upload_id"),
-                        "property_name": upload.get("property_name"),
-                        "agent_email": upload.get("agent_email"),
-                        "photo_count": upload.get("photo_count"),
-                        "uploaded_at": upload.get("uploaded_at"),
-                        "status": upload.get("status"),
-                        "office_id": office_id
-                    })
-
-        # Sort by upload date (most recent first)
-        all_uploads.sort(key=lambda x: x.get("uploaded_at", ""), reverse=True)
-
-        return {
-            "photographer_email": photographer_email,
-            "uploads": all_uploads,
-            "count": len(all_uploads)
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to fetch upload history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @fastapi_app.post("/feedback")
@@ -3084,191 +1868,6 @@ async def submit_feedback(
         }
 
 
-# ===================================================================
-# AGENCY BRANDING ENDPOINTS
-# ===================================================================
-
-@fastapi_app.get("/agencies")
-async def list_agencies():
-    """
-    List all available agencies with branding configurations.
-    """
-    try:
-        if not template_service:
-            raise HTTPException(status_code=503, detail="Template service not available")
-
-        agencies = template_service.list_agencies()
-        return {
-            "agencies": agencies,
-            "count": len(agencies)
-        }
-    except Exception as e:
-        logger.error(f"Failed to list agencies: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/agencies/{agency_id}")
-async def get_agency_branding(agency_id: str):
-    """
-    Get complete branding configuration for an agency.
-    """
-    try:
-        if not template_service:
-            raise HTTPException(status_code=503, detail="Template service not available")
-
-        branding = template_service.get_agency_branding(agency_id)
-        if not branding:
-            raise HTTPException(status_code=404, detail=f"Agency '{agency_id}' not found")
-
-        return branding.dict()
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to get agency branding: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/agencies/{agency_id}/colors")
-async def get_agency_colors(agency_id: str):
-    """
-    Get color palette for an agency.
-    """
-    try:
-        if not template_service:
-            raise HTTPException(status_code=503, detail="Template service not available")
-
-        branding = template_service.get_agency_branding(agency_id)
-        if not branding:
-            raise HTTPException(status_code=404, detail=f"Agency '{agency_id}' not found")
-
-        return branding.colors.dict()
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to get agency colors: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/agencies/{agency_id}/logo")
-async def get_agency_logo(agency_id: str):
-    """
-    Get logo file for an agency.
-    """
-    try:
-        if not template_service:
-            raise HTTPException(status_code=503, detail="Template service not available")
-
-        logo_path = template_service.get_logo_path(agency_id)
-        if not logo_path or not logo_path.exists():
-            raise HTTPException(status_code=404, detail=f"Logo not found for agency '{agency_id}'")
-
-        return FileResponse(
-            path=str(logo_path),
-            media_type="image/png",
-            filename=logo_path.name
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to get agency logo: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/agencies/{agency_id}/select-template")
-async def select_template_for_property(
-    agency_id: str,
-    property_character: PropertyCharacter,
-    price: int = None,
-    bedrooms: int = None,
-    property_type: str = None
-):
-    """
-    Get recommended template for a property based on its characteristics.
-
-    Example request body:
-    {
-        "property_character": "traditional",
-        "price": 750000,
-        "bedrooms": 3,
-        "property_type": "house"
-    }
-    """
-    try:
-        if not template_service:
-            raise HTTPException(status_code=503, detail="Template service not available")
-
-        branding = template_service.get_agency_branding(agency_id)
-        if not branding:
-            raise HTTPException(status_code=404, detail=f"Agency '{agency_id}' not found")
-
-        template = template_service.select_template(
-            agency_id=agency_id,
-            property_character=property_character,
-            price=price,
-            bedrooms=bedrooms,
-            property_type=property_type
-        )
-
-        template_config = branding.templates.get(template)
-
-        return {
-            "agency_id": agency_id,
-            "selected_template": template.value,
-            "template_config": template_config.dict() if template_config else None,
-            "property_details": {
-                "character": property_character.value,
-                "price": price,
-                "bedrooms": bedrooms,
-                "property_type": property_type
-            }
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to select template: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/agencies/{agency_id}/upload-logo")
-async def upload_agency_logo(
-    agency_id: str,
-    file: UploadFile = File(...)
-):
-    """
-    Upload logo for an agency.
-    """
-    try:
-        if not template_service:
-            raise HTTPException(status_code=503, detail="Template service not available")
-
-        # Validate file type
-        if not file.content_type or not file.content_type.startswith("image/"):
-            raise HTTPException(status_code=400, detail="File must be an image")
-
-        # Read file data
-        logo_data = await file.read()
-
-        # Save logo
-        logo_path = template_service.save_logo(
-            agency_id=agency_id,
-            logo_data=logo_data,
-            filename=file.filename or "logo.png"
-        )
-
-        logger.info(f"Logo uploaded for agency '{agency_id}': {logo_path}")
-
-        return {
-            "status": "success",
-            "agency_id": agency_id,
-            "logo_path": logo_path,
-            "filename": file.filename,
-            "size": len(logo_data)
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to upload logo: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================
@@ -3301,47 +1900,6 @@ async def heartbeat(request: HeartbeatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@fastapi_app.get("/collaborate/active-users", response_model=ActiveUsersResponse)
-async def get_active_users(current_user_email: Optional[str] = None):
-    """
-    Get list of ALL users (excluding current user), with online status.
-    Users can send to anyone regardless of online status.
-    """
-    try:
-        _cleanup_expired_sessions()
-
-        # Get current user's office
-        current_user = auth_system_instance.get_user(current_user_email) if current_user_email else None
-        office_id = current_user.get("office_id") if current_user else "savills_london"  # Default to Savills London
-
-        # Get all users from the same office
-        office_users = auth_system_instance.get_office_users(office_id)
-
-        # Build user list with online status
-        users = []
-        for user_data in office_users:
-            email = user_data["email"]
-
-            # Skip current user and photographers
-            if email == current_user_email or user_data.get("role") == "photographer":
-                continue
-
-            # Check if user has active session
-            is_active = email in active_sessions
-            last_seen = active_sessions[email].last_seen if is_active else 0
-
-            users.append(UserSession(
-                user_email=email,
-                user_name=user_data.get("name", email),
-                last_seen=last_seen
-            ))
-
-        logger.debug(f"All users request: {len(users)} users available from office {office_id}")
-
-        return ActiveUsersResponse(users=users)
-    except Exception as e:
-        logger.error(f"Get users error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @fastapi_app.post("/collaborate/share")
@@ -3385,250 +1943,8 @@ async def share_brochure(request: ShareBrochureRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@fastapi_app.get("/collaborate/pending", response_model=PendingHandoffsResponse)
-async def get_pending_handoffs(user_email: str):
-    """
-    Get pending brochure handoffs for a user.
-    """
-    try:
-        user_handoffs = pending_handoffs.get(user_email, [])
-
-        notifications = [
-            HandoffNotification(
-                handoff_id=h["handoff_id"],
-                sender_email=h["sender_email"],
-                sender_name=h.get("sender_name"),
-                timestamp=h["timestamp"],
-                address=h.get("address"),
-                message=h.get("message")
-            )
-            for h in user_handoffs
-        ]
-
-        logger.debug(f"Pending handoffs for {user_email}: {len(notifications)}")
-
-        return PendingHandoffsResponse(handoffs=notifications)
-    except Exception as e:
-        logger.error(f"Get pending handoffs error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
-@fastapi_app.post("/collaborate/accept/{handoff_id}", response_model=AcceptHandoffResponse)
-async def accept_handoff(handoff_id: str, user_email: str):
-    """
-    Accept and retrieve a pending handoff.
-    This removes the handoff from pending list.
-    """
-    try:
-        user_handoffs = pending_handoffs.get(user_email, [])
-
-        # Find the handoff
-        handoff = None
-        for i, h in enumerate(user_handoffs):
-            if h["handoff_id"] == handoff_id:
-                handoff = user_handoffs.pop(i)
-                break
-
-        if not handoff:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Handoff {handoff_id} not found for user {user_email}"
-            )
-
-        # Convert brochure_state dict back to BrochureState object
-        brochure_state = BrochureState(**handoff["brochure_state"])
-
-        logger.info(
-            f"Handoff accepted: {handoff_id} by {user_email} "
-            f"(from {handoff.get('sender_name', 'Unknown')})"
-        )
-
-        return AcceptHandoffResponse(
-            brochure_state=brochure_state,
-            sender_email=handoff["sender_email"],
-            sender_name=handoff.get("sender_name")
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Accept handoff error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/epc/search")
-async def search_epc_by_postcode(postcode: str, limit: int = 50):
-    """
-    Search for properties by postcode in EPC database
-
-    Returns list of properties with EPC ratings, addresses, and details
-    """
-    logger.info(f"EPC search request: postcode={postcode}")
-
-    if not epc_service or not epc_service.available:
-        raise HTTPException(status_code=503, detail="EPC service not available")
-
-    try:
-        results = epc_service.search_by_postcode(postcode, limit=limit)
-
-        if not results:
-            return {
-                "postcode": postcode,
-                "properties": [],
-                "message": "No properties found for this postcode"
-            }
-
-        return {
-            "postcode": postcode,
-            "count": len(results),
-            "properties": results
-        }
-
-    except Exception as e:
-        logger.error(f"EPC search failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"EPC search failed: {str(e)}")
-
-
-@fastapi_app.get("/epc/stats")
-async def get_epc_statistics():
-    """Get EPC database statistics"""
-    if not epc_service or not epc_service.available:
-        raise HTTPException(status_code=503, detail="EPC service not available")
-
-    try:
-        stats = epc_service.get_statistics()
-        return stats
-    except Exception as e:
-        logger.error(f"Failed to get EPC stats: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# =============================================================================
-# SCHOOLS WITH OFSTED RATINGS ENDPOINTS
-# =============================================================================
-
-@fastapi_app.get("/schools/nearby")
-async def get_nearby_schools(
-    latitude: float,
-    longitude: float,
-    radius_km: float = 1.6,
-    school_type: str = None,
-    min_rating: str = None,
-    limit: int = 10
-):
-    """
-    Find schools near a location with Ofsted ratings.
-
-    Args:
-        latitude: Center point latitude
-        longitude: Center point longitude
-        radius_km: Search radius in km (default 1.6 = ~1 mile)
-        school_type: Filter by 'primary' or 'secondary'
-        min_rating: Minimum Ofsted rating ('Outstanding', 'Good', etc.)
-        limit: Maximum results (default 10)
-
-    Returns:
-        List of schools with name, type, Ofsted rating, and distance
-    """
-    if not schools_service or not schools_service.available:
-        raise HTTPException(
-            status_code=503,
-            detail="Schools service not available. Run 'python scripts/download_schools_data.py' to download data."
-        )
-
-    try:
-        schools = schools_service.find_nearby_schools(
-            latitude=latitude,
-            longitude=longitude,
-            radius_km=radius_km,
-            school_type=school_type,
-            min_rating=min_rating,
-            limit=limit
-        )
-        return {"schools": schools, "count": len(schools)}
-    except Exception as e:
-        logger.error(f"Schools search failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/schools/summary")
-async def get_schools_summary(latitude: float, longitude: float, radius_km: float = 1.6):
-    """
-    Get a summary of schools near a location for brochure text.
-
-    Returns categorized schools (Outstanding/Good by Primary/Secondary)
-    and pre-written highlights for use in property descriptions.
-    """
-    if not schools_service or not schools_service.available:
-        raise HTTPException(
-            status_code=503,
-            detail="Schools service not available"
-        )
-
-    try:
-        summary = schools_service.get_school_summary(
-            latitude=latitude,
-            longitude=longitude,
-            radius_km=radius_km
-        )
-        return summary
-    except Exception as e:
-        logger.error(f"Schools summary failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# =============================================================================
-# LOCATION INTELLIGENCE ENDPOINT
-# =============================================================================
-
-# Initialize location intelligence service (uses OFFICIAL UK GOVERNMENT DATA)
-try:
-    from services.location_intelligence import get_location_intelligence_service
-    location_intelligence = get_location_intelligence_service(
-        schools_service=schools_service,       # Ofsted (gov.uk) - VERIFIED
-        transport_service=transport_service,   # NaPTAN (DfT) - VERIFIED
-        gp_service=gp_service,                 # NHS Digital - VERIFIED
-        places_client=places_client            # OpenStreetMap (crowdsourced)
-    )
-    logger.info("Location intelligence service initialized with official UK government data")
-except Exception as e:
-    logger.warning(f"Failed to initialize location intelligence service: {e}")
-    location_intelligence = None
-
-
-@fastapi_app.get("/location/intelligence")
-async def get_location_intelligence(
-    latitude: float,
-    longitude: float,
-    radius_km: float = 1.6
-):
-    """
-    Get comprehensive location intelligence for a property.
-
-    Combines data from multiple sources:
-    - Schools with Ofsted ratings
-    - Branded supermarkets (Waitrose, M&S, etc.)
-    - Transport links (stations)
-    - Medical facilities (GP surgeries)
-    - Leisure amenities (parks, pubs, restaurants)
-
-    Returns verified positive data only, suitable for property marketing.
-    """
-    if not location_intelligence:
-        raise HTTPException(
-            status_code=503,
-            detail="Location intelligence service not available"
-        )
-
-    try:
-        report = await location_intelligence.get_full_location_report(
-            latitude=latitude,
-            longitude=longitude,
-            radius_km=radius_km
-        )
-        return report
-    except Exception as e:
-        logger.error(f"Location intelligence failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =============================================================================
@@ -3903,116 +2219,6 @@ async def cleanup_expired_sessions():
 # MARKETING CONTENT GENERATION ENDPOINTS
 # =============================================================================
 
-@fastapi_app.post("/marketing/portal-listing")
-async def generate_portal_listing_endpoint(request: Request):
-    """
-    Generate formatted portal listing for Rightmove or Zoopla.
-    Accepts form data from URLSearchParams.
-    """
-    if not marketing_generator:
-        raise HTTPException(status_code=503, detail="Marketing generator not available")
-
-    try:
-        # Parse form data manually
-        form_data = await request.form()
-        data = dict(form_data)
-
-        property_name = data.get('property_name', 'Luxury Property')
-        address = data.get('address', 'Prime Location')
-        portal = data.get('portal', 'rightmove')
-        price = data.get('price')
-        bedrooms = int(data.get('bedrooms')) if data.get('bedrooms') else None
-        bathrooms = int(data.get('bathrooms')) if data.get('bathrooms') else None
-        property_type = data.get('property_type')
-        description = data.get('description')
-
-        # Parse key_features JSON string if provided
-        features_list = None
-        key_features = data.get('key_features')
-        if key_features:
-            import json
-            try:
-                features_list = json.loads(key_features)
-            except:
-                features_list = [key_features]
-
-        result = await marketing_generator.generate_portal_listing(
-            property_name=property_name,
-            address=address,
-            price=price,
-            bedrooms=bedrooms,
-            bathrooms=bathrooms,
-            property_type=property_type,
-            key_features=features_list,
-            description=description,
-            portal=portal
-        )
-
-        logger.info(f"Generated {portal} listing for {property_name}")
-        return result
-
-    except Exception as e:
-        logger.error(f"Failed to generate portal listing: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/marketing/email-newsletter")
-async def generate_email_newsletter_endpoint(request: Request):
-    """
-    Generate email newsletter with HTML template.
-    Accepts form data from URLSearchParams.
-    """
-    if not marketing_generator:
-        raise HTTPException(status_code=503, detail="Marketing generator not available")
-
-    try:
-        # Parse form data manually
-        form_data = await request.form()
-        data = dict(form_data)
-
-        property_name = data.get('property_name', 'Luxury Property')
-        address = data.get('address', 'Prime Location')
-        price = data.get('price')
-        bedrooms = int(data.get('bedrooms')) if data.get('bedrooms') else None
-        bathrooms = int(data.get('bathrooms')) if data.get('bathrooms') else None
-        property_type = data.get('property_type')
-        description = data.get('description')
-        agent_name = data.get('agent_name')
-        agent_phone = data.get('agent_phone')
-        agent_email = data.get('agent_email')
-        hero_image_url = data.get('hero_image_url')
-
-        # Parse key_features JSON string if provided
-        features_list = None
-        key_features = data.get('key_features')
-        if key_features:
-            import json
-            try:
-                features_list = json.loads(key_features)
-            except:
-                features_list = [key_features]
-
-        result = await marketing_generator.generate_email_newsletter(
-            property_name=property_name,
-            address=address,
-            price=price,
-            bedrooms=bedrooms,
-            bathrooms=bathrooms,
-            property_type=property_type,
-            key_features=features_list,
-            description=description,
-            agent_name=agent_name,
-            agent_phone=agent_phone,
-            agent_email=agent_email,
-            hero_image_url=hero_image_url
-        )
-
-        logger.info(f"Generated email newsletter for {property_name}")
-        return result
-
-    except Exception as e:
-        logger.error(f"Failed to generate email newsletter: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @fastapi_app.post("/marketing/social-post")
@@ -4118,53 +2324,6 @@ async def generate_social_post_endpoint(request: Request):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@fastapi_app.post("/marketing/hashtags")
-async def get_optimized_hashtags(request: Request):
-    """
-    Get optimized hashtags for a property listing.
-
-    Returns curated, location-based, and property-specific hashtags
-    from a database of proven high-engagement UK property hashtags.
-    """
-    try:
-        form_data = await request.form()
-        data = dict(form_data)
-
-        property_type = data.get('property_type')
-        location = data.get('location') or data.get('address')
-        target_audience = data.get('target_audience')
-        features = data.get('features')
-        platform = data.get('platform', 'instagram')
-
-        # Parse features if JSON string
-        features_list = None
-        if features:
-            import json
-            try:
-                features_list = json.loads(features)
-            except:
-                features_list = [features]
-
-        hashtag_service = get_hashtag_service()
-        result = await hashtag_service.get_hashtags(
-            property_type=property_type,
-            location=location,
-            target_audience=target_audience,
-            features=features_list,
-            platform=platform,
-            max_hashtags=15
-        )
-
-        # Add trending hashtags
-        trending = await hashtag_service.get_trending_hashtags()
-        result["trending_hashtags"] = trending
-
-        logger.info(f"Generated {result['count']} hashtags for {property_type or 'property'} in {location or 'UK'}")
-        return result
-
-    except Exception as e:
-        logger.error(f"Failed to get hashtags: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @fastapi_app.post("/api/quick-social-post", response_model=QuickSocialPostResponse)
@@ -4469,218 +2628,6 @@ Return ONLY a JSON object with this EXACT structure:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ============================================================================
-# USER PROFILE ENDPOINTS
-# ============================================================================
-
-@fastapi_app.get("/profile/{user_id}")
-async def get_user_profile(user_id: str):
-    """Get user profile by user ID."""
-    if not user_profile_service:
-        raise HTTPException(status_code=503, detail="User profile service not available")
-
-    profile = user_profile_service.load_profile(user_id)
-    if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
-
-    return profile.to_dict()
-
-
-@fastapi_app.get("/profile/by-email/{email}")
-async def get_user_profile_by_email(email: str):
-    """Get user profile by email address."""
-    if not user_profile_service:
-        raise HTTPException(status_code=503, detail="User profile service not available")
-
-    profile = user_profile_service.load_profile_by_email(email)
-    if not profile:
-        raise HTTPException(status_code=404, detail="Profile not found")
-
-    return profile.to_dict()
-
-
-@fastapi_app.post("/profile/upload-logo")
-async def upload_user_logo(
-    user_id: str = Form(...),
-    logo: UploadFile = File(...)
-):
-    """Upload user agency logo."""
-    if not user_profile_service:
-        raise HTTPException(status_code=503, detail="User profile service not available")
-
-    try:
-        # Read logo file
-        logo_data = await logo.read()
-
-        # Save logo
-        logo_path = user_profile_service.save_logo(
-            user_id=user_id,
-            logo_data=logo_data,
-            filename=logo.filename
-        )
-
-        if not logo_path:
-            raise HTTPException(status_code=500, detail="Failed to save logo")
-
-        logger.info(f"Logo uploaded for user {user_id}: {logo_path}")
-
-        return {
-            "success": True,
-            "logo_path": logo_path,
-            "message": "Logo uploaded successfully"
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to upload logo: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/profile/upload-agent-photo")
-async def upload_agent_photo(
-    user_id: str = Form(...),
-    photo: UploadFile = File(...)
-):
-    """Upload agent photo."""
-    if not user_profile_service:
-        raise HTTPException(status_code=503, detail="User profile service not available")
-
-    try:
-        # Read photo file
-        photo_data = await photo.read()
-
-        # Save photo
-        photo_path = user_profile_service.save_agent_photo(
-            user_id=user_id,
-            photo_data=photo_data,
-            filename=photo.filename
-        )
-
-        if not photo_path:
-            raise HTTPException(status_code=500, detail="Failed to save photo")
-
-        logger.info(f"Agent photo uploaded for user {user_id}: {photo_path}")
-
-        return {
-            "success": True,
-            "photo_path": photo_path,
-            "message": "Agent photo uploaded successfully"
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to upload agent photo: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.post("/profile/update-branding")
-async def update_user_branding(request: Request):
-    """Update user branding information."""
-    if not user_profile_service:
-        raise HTTPException(status_code=503, detail="User profile service not available")
-
-    try:
-        data = await request.json()
-        user_id = data.get("user_id")
-
-        if not user_id:
-            raise HTTPException(status_code=400, detail="user_id required")
-
-        success = user_profile_service.update_branding(
-            user_id=user_id,
-            agency_name=data.get("agency_name"),
-            agency_phone=data.get("agency_phone"),
-            agency_email=data.get("agency_email"),
-            agency_website=data.get("agency_website"),
-            primary_color=data.get("primary_color"),
-            secondary_color=data.get("secondary_color")
-        )
-
-        if not success:
-            raise HTTPException(status_code=404, detail="Profile not found")
-
-        logger.info(f"Branding updated for user {user_id}")
-
-        return {
-            "success": True,
-            "message": "Branding updated successfully"
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to update branding: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/profile/{user_id}/branding")
-async def get_user_branding(user_id: str):
-    """Get user branding for exports."""
-    if not user_profile_service:
-        raise HTTPException(status_code=503, detail="User profile service not available")
-
-    branding = user_profile_service.get_branding_for_export(user_id)
-    return branding
-
-
-# ============================================================================
-# PROPERTY AUTOFILL ENDPOINT
-# ============================================================================
-
-@fastapi_app.get("/property/autofill/{postcode}")
-async def autofill_property_data(postcode: str, address: Optional[str] = None):
-    """Auto-fill property data based on postcode.
-
-    Args:
-        postcode: UK postcode (e.g., "SW1X7LY" or "SW1X 7LY")
-        address: Optional full address to override
-
-    Returns:
-        Property data including EPC, council tax, size, etc.
-    """
-    if not property_autofill_service:
-        raise HTTPException(status_code=503, detail="Property autofill service not available")
-
-    try:
-        property_data = property_autofill_service.lookup_property_data(
-            postcode=postcode,
-            address=address
-        )
-
-        logger.info(f"Auto-filled property data for postcode: {postcode}")
-
-        return {
-            "success": True,
-            "data": property_data
-        }
-
-    except Exception as e:
-        logger.error(f"Failed to autofill property data: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@fastapi_app.get("/property/council-tax-bands")
-async def get_council_tax_bands():
-    """Get council tax band information."""
-    if not property_autofill_service:
-        raise HTTPException(status_code=503, detail="Property autofill service not available")
-
-    return property_autofill_service.get_council_tax_bands()
-
-
-@fastapi_app.get("/property/epc-info/{rating}")
-async def get_epc_info(rating: str):
-    """Get EPC rating information.
-
-    Args:
-        rating: EPC rating (A-G)
-    """
-    if not property_autofill_service:
-        raise HTTPException(status_code=503, detail="Property autofill service not available")
-
-    rating = rating.upper()
-    if rating not in ["A", "B", "C", "D", "E", "F", "G"]:
-        raise HTTPException(status_code=400, detail="Invalid EPC rating. Must be A-G")
-
-    return property_autofill_service.get_epc_rating_info(rating)
 
 
 # ============================================================================
@@ -4817,9 +2764,3 @@ if __name__ == "__main__":
         port=port,
         reload=os.environ.get("RAILWAY_ENVIRONMENT") is None  # Only reload in dev
     )
-# Trigger reload for auth system
-# EPC service reload
-
-
-
-

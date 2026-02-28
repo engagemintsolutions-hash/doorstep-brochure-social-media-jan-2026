@@ -269,7 +269,7 @@ class UserProfileService:
         """
         try:
             # Generate unique filename
-            file_hash = hashlib.md5(logo_data).hexdigest()[:8]
+            file_hash = hashlib.md5(logo_data, usedforsecurity=False).hexdigest()[:8]
             ext = Path(filename).suffix
             safe_filename = f"{user_id}_logo_{file_hash}{ext}"
 
@@ -305,7 +305,7 @@ class UserProfileService:
         """
         try:
             # Generate unique filename
-            file_hash = hashlib.md5(photo_data).hexdigest()[:8]
+            file_hash = hashlib.md5(photo_data, usedforsecurity=False).hexdigest()[:8]
             ext = Path(filename).suffix
             safe_filename = f"{user_id}_photo_{file_hash}{ext}"
 
